@@ -1,0 +1,128 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEXORA OS</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Tahoma,Arial;background:#f4f6fb;color:#20263a}
+header{background:white;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e8f0}
+.logo{font-size:23px;font-weight:bold;color:#4263eb}
+main{max-width:850px;margin:28px auto;padding:0 15px}
+.card{background:white;padding:24px;border:1px solid #e6e9f1;border-radius:18px;margin-bottom:18px}
+h1{font-size:26px;margin-top:0}
+p{line-height:1.8;color:#70788c}
+input{width:100%;padding:13px;margin:7px 0 14px;border:1px solid #dce1ed;border-radius:10px;font-size:15px}
+button{padding:12px 17px;border:0;border-radius:10px;background:#4263eb;color:white;font-weight:bold;cursor:pointer;margin:3px}
+button.secondary{background:#edf0ff;color:#3452cc}
+.status{font-size:14px;overflow-wrap:anywhere}
+.apps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.app{padding:20px 8px;text-align:center;background:#f7f8fc;border:1px solid #eceef5;border-radius:13px}
+.app span{font-size:27px;display:block;margin-bottom:8px}
+.hidden{display:none}
+@media(max-width:600px){.apps{grid-template-columns:repeat(2,1fr)}main{margin-top:15px}.card{padding:17px}}
+</style>
+</head>
+<body>
+<header>
+ <div class="logo">✦ NEXORA OS</div>
+ <button id="logout" class="hidden">تسجيل الخروج</button>
+</header>
+<main>
+ <section class="card">
+  <h1>مرحبًا بك في NEXORA</h1>
+  <p>مساحتك الرقمية للتواصل واكتشاف مجتمعك.</p>
+ </section>
+
+ <section class="card" id="auth">
+  <h2>حسابك</h2>
+  <label for="email">البريد الإلكتروني</label>
+  <input id="email" type="email" placeholder="name@example.com" autocomplete="email">
+  <label for="password">كلمة المرور</label>
+  <input id="password" type="password" placeholder="كلمة المرور" autocomplete="current-password">
+  <button id="login">تسجيل الدخول</button>
+  <button id="signup" class="secondary">إنشاء حساب</button>
+  <p id="status" class="status">سجّل الدخول أو أنشئ حسابًا جديدًا.</p>
+ </section>
+
+ <section class="card hidden" id="home">
+  <h2>أهلًا بك في مجتمعك 👋</h2>
+  <p id="welcome"></p>
+  <div class="apps">
+   <div class="app"><span>💬</span>الدردشة</div>
+   <div class="app"><span>👥</span>الأصدقاء</div>
+   <div class="app"><span>🌐</span>المجتمع</div>
+   <div class="app"><span>🔔</span>الإشعارات</div>
+   <div class="app"><span>🧑</span>الملف الشخصي</div>
+   <div class="app"><span>⚙️</span>الإعدادات</div>
+  </div>
+  <p>هذه واجهة البداية. الدردشة والأصدقاء والمجتمع تحتاج ربطًا بجداول قاعدة البيانات قبل أن تعمل وتحفظ البيانات.</p>
+ </section>
+</main>
+<script>
+const SUPABASE_URL="https://ayfxtomfqrantxmpqgof.supabase.co";
+const SUPABASE_KEY="sb_publishable_2d8TzhMCRIuc6daKrObBGA_7i0jUIxe";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+
+function message(text,error=false){
+ $("status").textContent=text;
+ $("status").style.color=error?"#c62828":"#16845b";
+}
+function displayUser(user){
+ if(user){
+  $("auth").classList.add("hidden");
+  $("home").classList.remove("hidden");
+  $("logout").classList.remove("hidden");
+  $("welcome").textContent="تم تسجيل الدخول باستخدام "+user.email;
+ }else{
+  $("auth").classList.remove("hidden");
+  $("home").classList.add("hidden");
+  $("logout").classList.add("hidden");
+ }
+}
+async function runAuth(type){
+ const email=$("email").value.trim();
+ const password=$("password").value;
+ if(!email||!password){message("اكتب البريد الإلكتروني وكلمة المرور أولًا.",true);return;}
+ if(password.length<6){message("كلمة المرور لازم تكون 6 أحرف على الأقل.",true);return;}
+ $("login").disabled=true;
+ $("signup").disabled=true;
+ message("جاري الاتصال...");
+ try{
+  let result;
+  if(type==="login"){
+   result=await db.auth.signInWithPassword({email,password});
+  }else{
+   result=await db.auth.signUp({email,password});
+  }
+  if(result.error)throw result.error;
+  if(type==="signup"&&!result.data.session){
+   message("تم إنشاء الطلب. شيّك بريدك لتأكيد الحساب إذا طُلب منك ذلك.");
+  }else{
+   displayUser(result.data.user);
+   message(type==="login"?"تم تسجيل الدخول بنجاح.":"تم إنشاء الحساب بنجاح.");
+  }
+ }catch(e){
+  message("تعذّر إكمال العملية: "+e.message,true);
+ }finally{
+  $("login").disabled=false;
+  $("signup").disabled=false;
+ }
+}
+$("login").addEventListener("click",()=>runAuth("login"));
+$("signup").addEventListener("click",()=>runAuth("signup"));
+$("logout").addEventListener("click",async()=>{
+ const {error}=await db.auth.signOut();
+ if(error){message(error.message,true);return;}
+ displayUser(null);
+ message("تم تسجيل الخروج.");
+});
+db.auth.getSession().then(({data})=>displayUser(data.session?.user||null));
+db.auth.onAuthStateChange((_event,session)=>displayUser(session?.user||null));
+</script>
+</body>
+</html>
