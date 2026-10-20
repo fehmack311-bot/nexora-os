@@ -1,0 +1,451 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEXORA</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--blue:#4263eb;--bg:#f5f6fa;--line:#e8eaf0;--muted:#777f90}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Tahoma,Arial,sans-serif;color:#202331}
+button,input,textarea{font:inherit}
+button{cursor:pointer;border:0;border-radius:10px;padding:10px 13px;background:var(--blue);color:white}
+button:disabled{opacity:.5;cursor:wait}
+input,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px;background:white;outline:none}
+textarea{resize:vertical;min-height:75px}
+.hide{display:none!important}
+.muted{color:var(--muted);font-size:12px}
+.brand{font-size:25px;font-weight:bold;letter-spacing:1px}
+.brand span{color:var(--blue)}
+.stack{display:grid;gap:10px}
+.row{display:flex;align-items:center;gap:8px}
+.grow{flex:1;min-width:0}
+#auth{max-width:420px;margin:8vh auto;background:white;padding:25px;border-radius:18px}
+#app{min-height:100vh}
+.topbar{background:white;border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:5}
+.layout{max-width:1200px;margin:20px auto;padding:0 14px;display:grid;grid-template-columns:260px minmax(0,1fr);gap:15px}
+.side,.main{background:white;border:1px solid var(--line);border-radius:15px;overflow:hidden}
+.side{padding:12px;height:max-content}
+.profilebox{padding:10px;border-bottom:1px solid var(--line);margin-bottom:10px;overflow-wrap:anywhere}
+.nav{width:100%;background:white;color:#42495a;text-align:right;margin:2px 0}
+.nav.active{background:#eef1ff;color:var(--blue)}
+.mainhead{padding:17px 19px;border-bottom:1px solid var(--line);font-weight:bold;font-size:18px}
+.content{padding:18px}
+.avatar{width:40px;height:40px;flex-shrink:0;border-radius:50%;display:grid;place-items:center;background:#e9edff;color:var(--blue);font-weight:bold}
+.userrow{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
+.userinfo{flex:1;min-width:0;overflow-wrap:anywhere}
+.userinfo small{display:block;color:var(--muted);margin-top:4px}
+.smallbtn{padding:7px 9px;font-size:12px}
+.secondary{background:#eef1ff;color:var(--blue)}
+.danger{background:#fff0f0;color:#b83232}
+.empty{text-align:center;padding:24px 8px;color:var(--muted)}
+#messages,#groupMessages{height:45vh;overflow:auto;padding:12px;background:#fafbff;border-radius:12px;display:flex;flex-direction:column;gap:8px}
+.bubble{padding:10px 13px;border-radius:14px;max-width:85%;overflow-wrap:anywhere;white-space:pre-wrap}
+.mine{align-self:flex-start;background:#e7ecff}
+.theirs{align-self:flex-end;background:white;border:1px solid var(--line)}
+.time{display:block;font-size:10px;color:var(--muted);margin-top:5px}
+.post{border:1px solid var(--line);padding:14px;border-radius:14px;margin:13px 0}
+.posthead{display:flex;gap:9px;align-items:center;margin-bottom:10px}
+.postbody{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;margin:10px 0}
+.postactions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#notice{display:none;position:fixed;bottom:15px;left:15px;right:15px;max-width:500px;margin:auto;padding:13px;background:#202331;color:white;border-radius:12px;z-index:20}
+#notice.show{display:block}
+.pill{background:#fff0f0;color:#b83232;border-radius:20px;padding:3px 7px;font-size:11px}
+.member{display:flex;gap:6px;align-items:center;padding:6px 0}
+@media(max-width:720px){
+ .layout{display:flex;flex-direction:column;margin:9px auto;padding:0 8px;gap:9px}
+ .side{padding:8px}.profilebox{padding:6px}
+ .navs{display:flex;flex-wrap:wrap;gap:3px}
+ .nav{width:auto;flex:1;text-align:center;font-size:12px;padding:9px 5px}
+ .topbar{padding:10px}.content{padding:12px}
+ #auth{margin:5vh 10px;padding:20px}
+}
+</style>
+</head>
+<body>
+<div id="notice"></div>
+
+<section id="auth">
+ <div class="brand">NEX<span>ORA</span></div>
+ <p class="muted">مجتمعك ومحادثاتك في مكان واحد</p>
+ <div class="stack">
+  <h3 id="authTitle">تسجيل الدخول</h3>
+  <div id="signupFields" class="stack hide">
+   <input id="displayName" placeholder="اسمك الظاهر">
+   <input id="username" placeholder="اسم المستخدم بالإنجليزية">
+  </div>
+  <input id="email" type="email" placeholder="البريد الإلكتروني">
+  <input id="password" type="password" placeholder="كلمة المرور">
+  <button id="authBtn">دخول</button>
+  <button id="modeBtn" class="secondary">إنشاء حساب جديد</button>
+  <p class="muted">قد تحتاج إلى تأكيد بريدك الإلكتروني قبل الدخول.</p>
+ </div>
+</section>
+
+<div id="app" class="hide">
+ <header class="topbar">
+  <div class="brand">NEX<span>ORA</span></div>
+  <div class="row">
+   <button id="notifBtn" class="secondary">🔔 <span id="notifCount">0</span></button>
+   <button id="logout" class="secondary">خروج</button>
+  </div>
+ </header>
+ <div class="layout">
+  <aside class="side">
+   <div class="profilebox">
+    <div class="row"><div class="avatar" id="myAvatar">N</div><div><strong id="myName">حسابي</strong><div class="muted" id="myUsername"></div></div></div>
+   </div>
+   <div class="navs">
+    <button class="nav active" data-page="chats">المحادثات</button>
+    <button class="nav" data-page="groups">القروبات</button>
+    <button class="nav" data-page="search">اكتشف</button>
+    <button class="nav" data-page="community">المجتمع</button>
+    <button class="nav" data-page="notifications">الإشعارات</button>
+   </div>
+   <div id="friends"><div class="empty">حمّل أصدقاءك من حسابك.</div></div>
+  </aside>
+
+  <main class="main">
+   <div class="mainhead" id="pageTitle">المحادثات</div>
+
+   <section id="chatPane" class="content">
+    <div id="chatIntro" class="empty">اختر صديقًا لبدء المحادثة.</div>
+    <div id="chatArea" class="hide">
+     <div class="row" style="margin-bottom:10px"><div class="avatar" id="chatAvatar">؟</div><div><strong id="chatName"></strong><div class="muted" id="chatUsername"></div></div></div>
+     <div id="messages"></div>
+     <form id="sendForm" class="row" style="margin-top:10px"><input id="messageText" class="grow" maxlength="2000" placeholder="اكتب رسالتك..."><button>إرسال</button></form>
+    </div>
+   </section>
+
+   <section id="groupsPane" class="content hide">
+    <h3>قروبات NEXORA</h3>
+    <form id="createGroupForm" class="stack">
+     <input id="groupNameInput" maxlength="60" placeholder="اسم القروب الجديد">
+     <div class="muted">اختر الأصدقاء اللي تبي تضيفهم. تقدر تضيف أعضاء لاحقًا.</div>
+     <div id="createGroupFriends"></div>
+     <button>إنشاء قروب</button>
+    </form>
+    <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+    <div id="groupsList"></div>
+    <div id="groupArea" class="hide">
+     <div class="row" style="margin:12px 0"><button id="backGroups" class="secondary">رجوع</button><strong id="activeGroupName" class="grow"></strong><button id="addGroupMember" class="secondary smallbtn">إضافة عضو</button></div>
+     <div id="groupMembers" class="muted"></div>
+     <div id="groupMessages" style="margin-top:10px"></div>
+     <form id="groupSendForm" class="row" style="margin-top:10px"><input id="groupMessageText" maxlength="2000" class="grow" placeholder="رسالة للقروب..."><button>إرسال</button></form>
+    </div>
+   </section>
+
+   <section id="searchPane" class="content hide">
+    <h3>اكتشف الأصدقاء</h3>
+    <form id="searchForm" class="row"><input id="searchText" class="grow" placeholder="اسم المستخدم"><button>بحث</button></form>
+    <div id="searchResults"></div>
+   </section>
+
+   <section id="communityPane" class="content hide">
+    <h3>مجتمع NEXORA</h3>
+    <form id="postForm" class="stack"><textarea id="postText" maxlength="2000" placeholder="وش ودك تشارك المجتمع؟"></textarea><button>نشر المنشور</button></form>
+    <div id="feed"></div>
+   </section>
+
+   <section id="notificationsPane" class="content hide">
+    <div class="row"><h3 class="grow">الإشعارات</h3><button id="refreshNotifications" class="secondary smallbtn">تحديث</button></div>
+    <div id="notificationList"></div>
+   </section>
+  </main>
+ </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const SUPABASE_URL='https://ayfxtomfqrantxmpqgof.supabase.co';
+const SUPABASE_KEY='sb_publishable_2d8TzhMCRIuc6daKrObBGA_7i0jUIxe';
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+let me=null,myProfile=null,selected=null,activeGroup=null,friendsList=[],groupsList=[],signupMode=false,noticeTimer=null;
+let refreshTimer=null,clockTimer=null;
+
+function notice(s){$('notice').textContent=s;$('notice').classList.add('show');clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>$('notice').classList.remove('show'),4500)}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function initial(s){return String(s||'N').trim().charAt(0).toUpperCase()||'N'}
+function errText(e){
+ let s=e?.message||String(e||'خطأ');
+ if(/Invalid login credentials/i.test(s))return 'البريد أو كلمة المرور غير صحيحة.';
+ if(/Email not confirmed/i.test(s))return 'أكد بريدك الإلكتروني أولًا.';
+ if(/duplicate key/i.test(s))return 'اسم المستخدم مستخدم من قبل.';
+ if(/Failed to fetch|NetworkError/i.test(s))return 'تعذر الاتصال. تأكد من الإنترنت.';
+ if(/does not exist|schema cache/i.test(s))return 'جدول أو دالة ناقصة. راجع خطوات SQL.';
+ if(/row-level security|permission denied/i.test(s))return 'الصلاحيات تمنع العملية. راجع سياسات Supabase.';
+ return s;
+}
+function setMode(v){signupMode=v;$('authTitle').textContent=v?'إنشاء حساب':'تسجيل الدخول';$('authBtn').textContent=v?'إنشاء الحساب':'دخول';$('modeBtn').textContent=v?'عندي حساب':'إنشاء حساب جديد';$('signupFields').classList.toggle('hide',!v)}
+$('modeBtn').onclick=()=>setMode(!signupMode);
+
+async function authAction(e){
+ e?.preventDefault();
+ const email=$('email').value.trim(),password=$('password').value;
+ const username=$('username').value.trim().toLowerCase(),displayName=$('displayName').value.trim();
+ if(!email||!password)return notice('اكتب البريد وكلمة المرور.');
+ if(password.length<6)return notice('كلمة المرور لازم تكون 6 أحرف على الأقل.');
+ if(signupMode&&(displayName.length<2||!/^[a-z0-9_]{3,24}$/.test(username)))return notice('اكتب اسمًا ظاهرًا، واسم مستخدم إنجليزي من 3 إلى 24 حرفًا.');
+ $('authBtn').disabled=true;
+ try{
+  if(signupMode){
+   const {data,error}=await db.auth.signUp({email,password,options:{data:{username,display_name:displayName}}});
+   if(error)throw error;
+   if(data.session&&data.user){
+    const {error:pe}=await db.from('nexora_profiles').upsert({user_id:data.user.id,username,display_name:displayName},{onConflict:'user_id'});
+    if(pe)throw pe;
+    await startApp(data.user);
+   }else{notice('تم الطلب. افحص بريدك للتأكيد ثم سجّل الدخول.');setMode(false)}
+  }else{
+   const {data,error}=await db.auth.signInWithPassword({email,password});
+   if(error)throw error;await startApp(data.user);
+  }
+ }catch(e){notice(errText(e))}finally{$('authBtn').disabled=false}
+}
+$('authBtn').onclick=authAction;
+$('password').addEventListener('keydown',e=>{if(e.key==='Enter')authAction(e)});
+
+async function startApp(user){
+ me=user;$('auth').classList.add('hide');$('app').classList.remove('hide');
+ try{
+  await loadProfile();await loadFriends();await loadFeed();await loadGroups();await loadNotifications();setPage('chats');
+  clearInterval(refreshTimer);refreshTimer=setInterval(()=>refreshCurrent().catch(e=>console.warn(e)),7000);
+  clearInterval(clockTimer);clockTimer=setInterval(updateCountdowns,1000);
+ }catch(e){notice(errText(e))}
+}
+async function loadProfile(){
+ const {data,error}=await db.from('nexora_profiles').select('user_id,username,display_name').eq('user_id',me.id).maybeSingle();
+ if(error)throw error;
+ if(data)myProfile=data;
+ else{
+  const md=me.user_metadata||{};
+  const p={user_id:me.id,username:md.username||('user_'+me.id.replace(/-/g,'').slice(0,12)),display_name:md.display_name||me.email?.split('@')[0]||'مستخدم'};
+  const {data:d,error:e}=await db.from('nexora_profiles').upsert(p,{onConflict:'user_id'}).select().single();
+  if(e)throw e;myProfile=d;
+ }
+ $('myName').textContent=myProfile.display_name||'حسابي';$('myUsername').textContent='@'+(myProfile.username||'');$('myAvatar').textContent=initial(myProfile.display_name);
+}
+async function loadFriends(){
+ const {data,error}=await db.from('nexora_friends').select('friend_id').eq('user_id',me.id);if(error)throw error;
+ const ids=(data||[]).map(x=>x.friend_id);friendsList=[];
+ if(ids.length){const {data:d,error:e}=await db.from('nexora_profiles').select('user_id,username,display_name').in('user_id',ids);if(e)throw e;friendsList=d||[]}
+ renderFriends();renderGroupFriendChoices();
+}
+function renderFriends(){
+ if(!friendsList.length){$('friends').innerHTML='<div class="empty">ما عندك أصدقاء للحين. ابحث عنهم من «اكتشف».</div>';return}
+ $('friends').innerHTML=friendsList.map(p=>`<div class="userrow"><div class="avatar">${esc(initial(p.display_name))}</div><div class="userinfo"><strong>${esc(p.display_name)}</strong><small>@${esc(p.username)}</small></div><button class="smallbtn secondary" data-chat="${esc(p.user_id)}">فتح</button></div>`).join('');
+ $('friends').querySelectorAll('[data-chat]').forEach(b=>b.onclick=()=>openChat(b.dataset.chat));
+}
+function setPage(page){
+ const map={chats:['chatPane','محادثاتي'],groups:['groupsPane','القروبات'],search:['searchPane','اكتشف الأصدقاء'],community:['communityPane','المجتمع'],notifications:['notificationsPane','الإشعارات']};
+ Object.keys(map).forEach(k=>$(map[k][0]).classList.toggle('hide',k!==page));
+ $('pageTitle').textContent=map[page][1];
+ document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+}
+document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>setPage(b.dataset.page));
+
+async function openChat(id){
+ const p=friendsList.find(x=>x.user_id===id);if(!p)return;
+ selected=id;activeGroup=null;setPage('chats');$('chatIntro').classList.add('hide');$('chatArea').classList.remove('hide');
+ $('chatName').textContent=p.display_name||'مستخدم';$('chatUsername').textContent='@'+(p.username||'');$('chatAvatar').textContent=initial(p.display_name);
+ await loadMessages();
+}
+async function loadMessages(){
+ if(!selected)return;const other=selected;
+ const {data,error}=await db.from('nexora_chat_messages').select('id,sender_id,receiver_id,body,created_at')
+ .or(`and(sender_id.eq.${me.id},receiver_id.eq.${other}),and(sender_id.eq.${other},receiver_id.eq.${me.id})`).order('created_at').limit(300);
+ if(error)throw error;if(selected!==other)return;
+ $('messages').innerHTML=(data||[]).map(m=>`<div class="bubble ${m.sender_id===me.id?'mine':'theirs'}">${esc(m.body)}<span class="time">${esc(new Date(m.created_at).toLocaleString('ar-SA'))}</span></div>`).join('')||'<div class="empty">ابدأ المحادثة 👋</div>';
+ $('messages').scrollTop=$('messages').scrollHeight;
+}
+async function pushNotification(recipient,type,body,groupId=null){
+ if(!recipient||recipient===me.id)return;
+ const {error}=await db.from('nexora_notifications').insert({recipient_id:recipient,actor_id:me.id,type,body,group_id:groupId});
+ if(error)console.warn('notification:',error.message);
+}
+$('sendForm').onsubmit=async e=>{
+ e.preventDefault();const body=$('messageText').value.trim();if(!body||!selected)return;
+ const receiver=selected,btn=$('sendForm').querySelector('button');btn.disabled=true;
+ try{
+  const {error}=await db.from('nexora_chat_messages').insert({sender_id:me.id,receiver_id:receiver,body});if(error)throw error;
+  $('messageText').value='';await pushNotification(receiver,'message','أرسل لك رسالة جديدة');await loadMessages();
+ }catch(e){notice(errText(e))}finally{btn.disabled=false}
+};
+
+$('searchForm').onsubmit=async e=>{
+ e.preventDefault();const term=$('searchText').value.trim();if(term.length<2)return notice('اكتب حرفين على الأقل.');
+ $('searchResults').innerHTML='<div class="empty">جاري البحث...</div>';
+ try{
+  const {data,error}=await db.rpc('nexora_search_users',{search_text:term});if(error)throw error;
+  if(!data?.length){$('searchResults').innerHTML='<div class="empty">ما لقينا حسابًا بهذا الاسم.</div>';return}
+  const known=new Set(friendsList.map(p=>p.user_id));
+  $('searchResults').innerHTML=data.map(p=>`<div class="userrow"><div class="avatar">${esc(initial(p.display_name))}</div><div class="userinfo"><strong>${esc(p.display_name)}</strong><small>@${esc(p.username)}</small></div>${known.has(p.user_id)?'<span class="muted">صديقك</span>':`<button class="smallbtn" data-add="${esc(p.user_id)}">إضافة</button>`}</div>`).join('');
+  $('searchResults').querySelectorAll('[data-add]').forEach(b=>b.onclick=async()=>{
+   b.disabled=true;try{
+    const target=b.dataset.add;const {error}=await db.rpc('nexora_add_friend',{target_id:target});if(error)throw error;
+    await pushNotification(target,'friend','أضافك إلى قائمة أصدقائه');notice('تمت إضافة الصديق!');await loadFriends();await searchAgain();
+   }catch(e){notice(errText(e));b.disabled=false}
+  });
+ }catch(e){notice(errText(e))}
+};
+async function searchAgain(){if($('searchText').value.trim().length>=2)$('searchForm').requestSubmit()}
+
+async function loadFeed(){
+ try{await db.rpc('nexora_cleanup_expired_posts')}catch(e){console.warn('تنظيف المنشورات:',e.message)}
+ const {data,error}=await db.from('nexora_community_posts').select('id,user_id,body,created_at').gt('created_at',new Date(Date.now()-12*60*60*1000).toISOString()).order('created_at',{ascending:false}).limit(100);
+ if(error)throw error;
+ const posts=data||[],ids=[...new Set(posts.map(p=>p.user_id))],postIds=posts.map(p=>p.id);let profiles=[],likes=[];
+ if(ids.length){const {data:d,error:e}=await db.from('nexora_profiles').select('user_id,username,display_name').in('user_id',ids);if(e)throw e;profiles=d||[]}
+ if(postIds.length){const {data:d,error:e}=await db.from('nexora_post_likes').select('post_id,user_id').in('post_id',postIds);if(e)throw e;likes=d||[]}
+ const pmap=Object.fromEntries(profiles.map(p=>[p.user_id,p]));
+ $('feed').innerHTML=posts.map(p=>{
+  const u=pmap[p.user_id]||{username:'user',display_name:'مستخدم'},mineLiked=likes.some(l=>l.post_id===p.id&&l.user_id===me.id),count=likes.filter(l=>l.post_id===p.id).length;
+  const expiry=new Date(new Date(p.created_at).getTime()+12*60*60*1000).getTime();
+  return `<article class="post" data-expiry="${expiry}"><div class="posthead"><div class="avatar">${esc(initial(u.display_name))}</div><div><strong>${esc(u.display_name)}</strong><div class="muted">@${esc(u.username)} · ${esc(new Date(p.created_at).toLocaleString('ar-SA'))}</div><div class="muted countdown">⏳ يحسب الوقت...</div></div></div><div class="postbody">${esc(p.body)}</div><div class="postactions"><button class="smallbtn ${mineLiked?'secondary':''}" data-like="${p.id}">${mineLiked?'💙 إلغاء اللايك':'❤️ لايك'} · <span>${count}</span></button>${p.user_id===me.id?`<button class="smallbtn danger" data-delete-post="${p.id}">حذف</button>`:''}</div></article>`;
+ }).join('')||'<div class="empty">ما فيه منشورات فعّالة. كن أول من ينشر!</div>';
+ $('feed').querySelectorAll('[data-like]').forEach(b=>b.onclick=()=>toggleLike(Number(b.dataset.like),b));
+ $('feed').querySelectorAll('[data-delete-post]').forEach(b=>b.onclick=()=>deletePost(Number(b.dataset.deletePost)));
+ updateCountdowns();
+}
+function updateCountdowns(){
+ document.querySelectorAll('[data-expiry]').forEach(el=>{
+  const remain=Number(el.dataset.expiry)-Date.now();
+  if(remain<=0){el.remove();return}
+  const h=Math.floor(remain/3600000),m=Math.floor(remain%3600000/60000),s=Math.floor(remain%60000/1000);
+  const c=el.querySelector('.countdown');if(c)c.textContent=`⏳ باقي ${h} ساعة و${m} دقيقة و${s} ثانية`;
+ });
+}
+async function toggleLike(postId,button){
+ button.disabled=true;
+ try{
+  const {data,error}=await db.from('nexora_post_likes').select('post_id').eq('post_id',postId).eq('user_id',me.id).maybeSingle();if(error)throw error;
+  if(data){const {error:e}=await db.from('nexora_post_likes').delete().eq('post_id',postId).eq('user_id',me.id);if(e)throw e}
+  else{const {error:e}=await db.from('nexora_post_likes').insert({post_id:postId,user_id:me.id});if(e)throw e}
+  await loadFeed();
+ }catch(e){notice(errText(e))}finally{button.disabled=false}
+}
+async function deletePost(id){
+ if(!confirm('متأكد تبي تحذف المنشور؟'))return;
+ const {error}=await db.from('nexora_community_posts').delete().eq('id',id).eq('user_id',me.id);
+ if(error){notice(errText(error));return}await loadFeed();notice('تم حذف المنشور.');
+}
+$('postForm').onsubmit=async e=>{
+ e.preventDefault();const body=$('postText').value.trim();if(!body)return notice('اكتب شيئًا قبل النشر.');
+ const b=$('postForm').querySelector('button');b.disabled=true;
+ try{const {error}=await db.from('nexora_community_posts').insert({user_id:me.id,body});if(error)throw error;$('postText').value='';await loadFeed();notice('تم النشر!')}
+ catch(e){notice(errText(e))}finally{b.disabled=false}
+};
+
+function renderGroupFriendChoices(){
+ $('createGroupFriends').innerHTML=friendsList.map(p=>`<label class="member"><input type="checkbox" value="${esc(p.user_id)}" style="width:auto"><span>${esc(p.display_name)} <span class="muted">@${esc(p.username)}</span></span></label>`).join('')||'<div class="muted">أضف أصدقاء أولًا من صفحة اكتشف.</div>';
+}
+async function loadGroups(){
+ const {data,error}=await db.from('nexora_group_members').select('group_id').eq('user_id',me.id);if(error)throw error;
+ const ids=[...new Set((data||[]).map(x=>x.group_id))];groupsList=[];
+ if(ids.length){const {data:d,error:e}=await db.from('nexora_groups').select('id,name,created_by,created_at').in('id',ids).order('created_at',{ascending:false});if(e)throw e;groupsList=d||[]}
+ renderGroups();
+}
+function renderGroups(){
+ $('groupsList').innerHTML=groupsList.map(g=>`<div class="userrow"><div class="avatar">👥</div><div class="userinfo"><strong>${esc(g.name)}</strong><small>قروب NEXORA</small></div><button class="smallbtn" data-open-group="${g.id}">فتح</button></div>`).join('')||'<div class="empty">ما عندك قروبات للحين.</div>';
+ $('groupsList').querySelectorAll('[data-open-group]').forEach(b=>b.onclick=()=>openGroup(b.dataset.openGroup));
+}
+$('createGroupForm').onsubmit=async e=>{
+ e.preventDefault();const name=$('groupNameInput').value.trim();if(!name)return notice('اكتب اسم القروب.');
+ const selectedIds=[...$('createGroupFriends').querySelectorAll('input:checked')].map(x=>x.value);
+ const btn=$('createGroupForm').querySelector('button');btn.disabled=true;
+ try{
+  const {data:g,error}=await db.from('nexora_groups').insert({name,created_by:me.id}).select('id,name,created_by,created_at').single();if(error)throw error;
+  const members=[...new Set([me.id,...selectedIds])].map(user_id=>({group_id:g.id,user_id,added_by:me.id}));
+  const {error:e2}=await db.from('nexora_group_members').insert(members);if(e2)throw e2;
+  for(const id of selectedIds)await pushNotification(id,'group','تمت إضافتك إلى قروب: '+name,g.id);
+  $('groupNameInput').value='';$('createGroupFriends').querySelectorAll('input').forEach(x=>x.checked=false);
+  await loadGroups();notice('تم إنشاء القروب!');await openGroup(g.id);
+ }catch(e){notice(errText(e))}finally{btn.disabled=false}
+};
+async function openGroup(id){
+ const g=groupsList.find(x=>x.id===id);if(!g)return;
+ activeGroup=id;selected=null;$('groupArea').classList.remove('hide');$('activeGroupName').textContent=g.name;
+ await loadGroupMembers();await loadGroupMessages();
+}
+async function loadGroupMembers(){
+ if(!activeGroup)return;
+ const {data,error}=await db.from('nexora_group_members').select('user_id').eq('group_id',activeGroup);if(error)throw error;
+ const ids=(data||[]).map(x=>x.user_id);let profiles=[];
+ if(ids.length){const {data:d,error:e}=await db.from('nexora_profiles').select('user_id,username,display_name').in('user_id',ids);if(e)throw e;profiles=d||[]}
+ $('groupMembers').innerHTML='الأعضاء: '+profiles.map(p=>esc(p.display_name||p.username)).join('، ');
+}
+async function loadGroupMessages(){
+ if(!activeGroup)return;const id=activeGroup;
+ const {data,error}=await db.from('nexora_group_messages').select('id,group_id,sender_id,body,created_at').eq('group_id',id).order('created_at').limit(300);
+ if(error)throw error;
+ const ids=[...new Set((data||[]).map(m=>m.sender_id))];let profiles=[];
+ if(ids.length){const {data:d,error:e}=await db.from('nexora_profiles').select('user_id,display_name').in('user_id',ids);if(e)throw e;profiles=d||[]}
+ const pm=Object.fromEntries(profiles.map(p=>[p.user_id,p.display_name]));
+ $('groupMessages').innerHTML=(data||[]).map(m=>`<div class="bubble ${m.sender_id===me.id?'mine':'theirs'}"><strong>${esc(pm[m.sender_id]||'عضو')}</strong><br>${esc(m.body)}<span class="time">${esc(new Date(m.created_at).toLocaleString('ar-SA'))}</span></div>`).join('')||'<div class="empty">ابدأوا الكلام في القروب 👋</div>';
+ $('groupMessages').scrollTop=$('groupMessages').scrollHeight;
+}
+$('groupSendForm').onsubmit=async e=>{
+ e.preventDefault();const body=$('groupMessageText').value.trim(),gid=activeGroup;if(!body||!gid)return;
+ const b=$('groupSendForm').querySelector('button');b.disabled=true;
+ try{
+  const {error}=await db.from('nexora_group_messages').insert({group_id:gid,sender_id:me.id,body});if(error)throw error;
+  const {data:members,error:meErr}=await db.from('nexora_group_members').select('user_id').eq('group_id',gid);if(meErr)throw meErr;
+  const g=groupsList.find(x=>x.id===gid);
+  for(const m of members||[])if(m.user_id!==me.id)await pushNotification(m.user_id,'group_message','رسالة جديدة في قروب '+(g?.name||''),gid);
+  $('groupMessageText').value='';await loadGroupMessages();
+ }catch(e){notice(errText(e))}finally{b.disabled=false}
+};
+$('backGroups').onclick=()=>{$('groupArea').classList.add('hide');activeGroup=null};
+$('addGroupMember').onclick=async()=>{
+ if(!activeGroup)return;
+ const current=await db.from('nexora_group_members').select('user_id').eq('group_id',activeGroup);
+ if(current.error)return notice(errText(current.error));
+ const inGroup=new Set((current.data||[]).map(x=>x.user_id));
+ const options=friendsList.filter(p=>!inGroup.has(p.user_id));
+ if(!options.length)return notice('كل أصدقائك الموجودين متاحون بالفعل أو ما عندك أصدقاء جدد.');
+ const choice=prompt('اكتب اسم المستخدم الذي تريد إضافته:\n'+options.map(p=>p.username).join('\n'));
+ if(!choice)return;
+ const p=options.find(x=>x.username?.toLowerCase()===choice.trim().replace(/^@/,'').toLowerCase());
+ if(!p)return notice('اسم المستخدم غير موجود في قائمة أصدقائك.');
+ try{
+  const {error}=await db.from('nexora_group_members').insert({group_id:activeGroup,user_id:p.user_id,added_by:me.id});if(error)throw error;
+  const g=groupsList.find(x=>x.id===activeGroup);await pushNotification(p.user_id,'group','تمت إضافتك إلى قروب: '+(g?.name||''),activeGroup);
+  await loadGroupMembers();notice('تمت إضافة العضو.');
+ }catch(e){notice(errText(e))}
+};
+
+async function loadNotifications(){
+ const {data,error}=await db.from('nexora_notifications').select('id,actor_id,type,body,group_id,is_read,created_at').eq('recipient_id',me.id).order('created_at',{ascending:false}).limit(100);
+ if(error)throw error;
+ const all=data||[],unread=all.filter(n=>!n.is_read).length;$('notifCount').textContent=unread;
+ $('notificationList').innerHTML=all.map(n=>`<div class="post"><div>${n.is_read?'':'<span class="pill">جديد</span> '}<strong>${esc(n.body||'إشعار جديد')}</strong></div><div class="muted">${esc(new Date(n.created_at).toLocaleString('ar-SA'))}</div>${n.is_read?'':`<button class="smallbtn secondary" data-read="${n.id}" style="margin-top:8px">تحديد كمقروء</button>`}</div>`).join('')||'<div class="empty">ما عندك إشعارات حاليًا.</div>';
+ $('notificationList').querySelectorAll('[data-read]').forEach(b=>b.onclick=async()=>{
+  const {error}=await db.from('nexora_notifications').update({is_read:true}).eq('id',Number(b.dataset.read)).eq('recipient_id',me.id);
+  if(error)return notice(errText(error));await loadNotifications();
+ });
+}
+$('notifBtn').onclick=async()=>{setPage('notifications');try{await loadNotifications()}catch(e){notice(errText(e))}};
+$('refreshNotifications').onclick=()=>loadNotifications().catch(e=>notice(errText(e)));
+
+async function refreshCurrent(){
+ if(!me)return;
+ try{
+  await loadNotifications();
+  if(selected)await loadMessages();
+  if(activeGroup)await loadGroupMessages();
+  if(!$('communityPane').classList.contains('hide'))await loadFeed();
+ }catch(e){console.warn(e)}
+}
+$('logout').onclick=async()=>{clearInterval(refreshTimer);clearInterval(clockTimer);const {error}=await db.auth.signOut();if(error)return notice(errText(error));location.reload()};
+db.auth.getSession().then(async({data,error})=>{
+ if(error)return notice(errText(error));
+ if(data.session?.user)await startApp(data.session.user);
+});
+})();
+</script>
+</body>
+</html>
