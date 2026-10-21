@@ -11,7 +11,8 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#f5f6f8;color:#202124}
 button,input,textarea{font:inherit}
-button{cursor:pointer;border:0;border-radius:10px;padding:11px 15px}
+button{cursor:pointer;border:0;border-radius:10px;padding:11px 15px;transition:.15s}
+button:disabled{opacity:.6;cursor:wait}
 .primary{background:#17191d;color:white}
 .secondary{background:#e9ebef;color:#222}
 input,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;background:white;outline:none;margin:6px 0}
@@ -35,20 +36,27 @@ h3{font-size:16px;margin:0 0 8px}
 .postbody{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;margin:15px 0}
 .actions{display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid #eee;padding-top:10px}
 .actions button{background:#f4f4f5}
+.actions button.liked{background:#e9e9ff;color:#3730a3}
 .hidden{display:none!important}
 #auth{max-width:420px;margin:9vh auto;padding:15px}
 .authbox{padding:25px}
 #notice{padding:12px;border-radius:10px;margin:10px 0;background:#eee;display:none;overflow-wrap:anywhere}
-.item{padding:13px 0;border-bottom:1px solid #eee}
+#notice.bad{background:#fff0f0;color:#a40000}
+#notice.good{background:#eaf8ee;color:#176b30}
+.item{padding:13px 0;border-bottom:1px solid #eee;overflow-wrap:anywhere}
 .item:last-child{border-bottom:0}
 footer{text-align:center;color:#888;padding:20px;font-size:12px}
 label{display:block;margin-top:12px;font-size:14px}
 .counter{font-size:12px;color:#777;text-align:left}
+.status{font-size:12px;color:#777;margin-top:8px}
+.postCount{font-size:12px;color:#777}
+textarea{resize:vertical}
 @media(max-width:700px){
 #layout{display:block;margin:12px auto}
 aside{position:static;margin-bottom:12px;display:flex;overflow:auto;gap:4px}
 .nav{width:auto;white-space:nowrap;margin:0}
 header{padding:0 13px}
+.panel{padding:14px}
 }
 </style>
 </head>
@@ -65,20 +73,19 @@ header{padding:0 13px}
   <div class="authbox">
     <h1>NEXORA OS</h1>
     <p class="muted">مساحتك الخاصة للتواصل والمجتمع.</p>
-    <div id="notice"></div>
-
-    <form id="authForm" autocomplete="off" onsubmit="return false">
+    <div id="notice" role="status" aria-live="polite"></div>
+    <form id="authForm" autocomplete="off">
       <input id="email" type="email" placeholder="البريد الإلكتروني"
-        autocomplete="off" name="nx-email-field">
+        autocomplete="off" name="nx-email-new" required>
 
       <input id="password" type="password" placeholder="كلمة المرور"
-        autocomplete="new-password" name="nx-password-field">
+        autocomplete="new-password" name="nx-password-new" required>
 
       <label for="username">معرّف الحساب (من 1 إلى 5 أحرف)</label>
       <input id="username" placeholder="مثال: nx123"
-        maxlength="5" minlength="1"
-        autocomplete="new-password" name="nx-new-handle"
-        autocorrect="off" autocapitalize="off" spellcheck="false">
+        maxlength="5" minlength="1" autocomplete="off"
+        name="nx-handle-new" autocorrect="off"
+        autocapitalize="off" spellcheck="false" required>
       <div class="counter">الحد الأقصى 5 أحرف.</div>
 
       <button type="button" class="primary" style="width:100%;margin-top:8px" onclick="signup()">إنشاء حساب</button>
@@ -100,92 +107,97 @@ header{padding:0 13px}
 
 <main>
 <section id="page-feed">
-<div class="panel">
-<h2>المجتمع</h2>
-<textarea id="postText" rows="3" placeholder="وش ودك تشارك اليوم؟"></textarea>
-<button class="primary" onclick="createPost()">نشر</button>
-</div>
-<div id="feedList"></div>
+  <div class="panel">
+    <h2>المجتمع</h2>
+    <textarea id="postText" rows="3" maxlength="3000" placeholder="وش ودك تشارك اليوم؟"></textarea>
+    <div class="row" style="justify-content:space-between;flex-wrap:wrap">
+      <span class="muted">شارك أفكارك مع المجتمع.</span>
+      <button class="primary" id="publishBtn" onclick="createPost()">نشر</button>
+    </div>
+  </div>
+  <div id="feedList"></div>
 </section>
 
 <section id="page-messages" class="hidden">
-<div class="panel">
-<h2>الدردشة</h2>
-<p class="muted">اكتب معرّف المستخدم UUID للشخص اللي تبي تراسله.</p>
-<input id="recipient" placeholder="معرّف المستخدم UUID"
-  autocomplete="off" name="nx-chat-recipient"
-  autocorrect="off" autocapitalize="off" spellcheck="false">
-<button class="primary" onclick="openChat()">فتح المحادثة</button>
-</div>
-<div id="chatPanel" class="panel hidden">
-<h3 id="chatTitle">المحادثة</h3>
-<div id="chatList"></div>
-<textarea id="messageText" placeholder="اكتب رسالتك"></textarea>
-<button class="primary" onclick="sendMessage()">إرسال</button>
-<button class="secondary" onclick="loadChat()">تحديث</button>
-</div>
+  <div class="panel">
+    <h2>الدردشة</h2>
+    <p class="muted">أدخل UUID للشخص اللي تبي تراسله.</p>
+    <input id="recipient" placeholder="معرّف المستخدم UUID"
+      autocomplete="off" name="nx-recipient-new"
+      autocorrect="off" autocapitalize="off" spellcheck="false">
+    <button class="primary" onclick="openChat()">فتح المحادثة</button>
+  </div>
+  <div id="chatPanel" class="panel hidden">
+    <h3 id="chatTitle">المحادثة</h3>
+    <div id="chatList"></div>
+    <textarea id="messageText" maxlength="3000" placeholder="اكتب رسالتك"></textarea>
+    <button class="primary" onclick="sendMessage()">إرسال</button>
+    <button class="secondary" onclick="loadChat()">تحديث</button>
+  </div>
 </section>
 
 <section id="page-groups" class="hidden">
-<div class="panel">
-<h2>القروبات</h2>
-<input id="groupName" placeholder="اسم القروب" autocomplete="off">
-<button class="primary" onclick="createGroup()">إنشاء قروب</button>
-</div>
-<div class="panel">
-<h3>القروبات المتاحة</h3>
-<div id="groupList"></div>
-</div>
-<div id="groupChatPanel" class="panel hidden">
-<h3 id="groupChatTitle">رسائل القروب</h3>
-<div id="groupChatList"></div>
-<textarea id="groupMessageText" placeholder="اكتب رسالة للقروب"></textarea>
-<button class="primary" onclick="sendGroupMessage()">إرسال</button>
-<button class="secondary" onclick="loadGroupMessages()">تحديث</button>
-</div>
+  <div class="panel">
+    <h2>القروبات</h2>
+    <input id="groupName" maxlength="80" placeholder="اسم القروب" autocomplete="off">
+    <button class="primary" onclick="createGroup()">إنشاء قروب</button>
+  </div>
+  <div class="panel">
+    <h3>القروبات المتاحة</h3>
+    <div id="groupList"></div>
+  </div>
+  <div id="groupChatPanel" class="panel hidden">
+    <h3 id="groupChatTitle">رسائل القروب</h3>
+    <div id="groupChatList"></div>
+    <textarea id="groupMessageText" maxlength="3000" placeholder="اكتب رسالة للقروب"></textarea>
+    <button class="primary" onclick="sendGroupMessage()">إرسال</button>
+    <button class="secondary" onclick="loadGroupMessages()">تحديث</button>
+  </div>
 </section>
 
 <section id="page-friends" class="hidden">
-<div class="panel">
-<h2>الأصدقاء</h2>
-<input id="friendUserId" placeholder="معرّف المستخدم UUID"
-  autocomplete="off" name="nx-friend-identifier"
-  autocorrect="off" autocapitalize="off" spellcheck="false">
-<button class="primary" onclick="sendFriendRequest()">إرسال طلب صداقة</button>
-</div>
-<div class="panel">
-<h3>طلبات الصداقة والأصدقاء</h3>
-<div id="friendsList"></div>
-</div>
+  <div class="panel">
+    <h2>الأصدقاء</h2>
+    <p class="muted">أدخل UUID للشخص لإرسال طلب صداقة. ما فيه اقتراحات أشخاص داخل الصفحة.</p>
+    <input id="friendUserId" placeholder="معرّف المستخدم UUID"
+      autocomplete="off" name="nx-friend-new"
+      autocorrect="off" autocapitalize="off" spellcheck="false">
+    <button class="primary" onclick="sendFriendRequest()">إرسال طلب صداقة</button>
+  </div>
+  <div class="panel">
+    <h3>طلبات الصداقة والأصدقاء</h3>
+    <div id="friendsList"></div>
+  </div>
 </section>
 
 <section id="page-notifications" class="hidden">
-<div class="panel">
-<h2>الإشعارات</h2>
-<div id="notificationList"></div>
-</div>
+  <div class="panel">
+    <h2>الإشعارات</h2>
+    <div id="notificationList"></div>
+  </div>
 </section>
 
 <section id="page-profile" class="hidden">
-<div class="panel">
-<h2>حسابي</h2>
-<div class="row">
-<div class="avatar" id="profileAvatar">N</div>
-<strong id="profileName">مستخدم NEXORA</strong>
-</div>
-<p class="muted" id="profileEmail"></p>
-<label for="displayName">اسم العرض</label>
-<input id="displayName" placeholder="اسم العرض" autocomplete="off">
-<label for="profileUsername">معرّف المستخدم (من 1 إلى 5 أحرف)</label>
-<input id="profileUsername" placeholder="معرّف المستخدم"
-  maxlength="5" minlength="1"
-  autocomplete="new-password" name="nx-profile-handle"
-  autocorrect="off" autocapitalize="off" spellcheck="false">
-<div class="counter">الحد الأقصى 5 أحرف.</div>
-<button class="primary" onclick="saveProfile()">حفظ التعديلات</button>
-<p class="muted">معرّف حسابك:</p>
-<div id="userId" style="overflow-wrap:anywhere"></div>
-</div>
+  <div class="panel">
+    <h2>حسابي</h2>
+    <div class="row">
+      <div class="avatar" id="profileAvatar">N</div>
+      <strong id="profileName">مستخدم NEXORA</strong>
+    </div>
+    <p class="muted" id="profileEmail"></p>
+    <label for="displayName">اسم العرض</label>
+    <input id="displayName" maxlength="80" placeholder="اسم العرض" autocomplete="off">
+    <label for="profileUsername">معرّف المستخدم (من 1 إلى 5 أحرف)</label>
+    <input id="profileUsername" placeholder="معرّف المستخدم"
+      maxlength="5" minlength="1" autocomplete="off"
+      name="nx-profile-new" autocorrect="off"
+      autocapitalize="off" spellcheck="false">
+    <div class="counter">الحد الأقصى 5 أحرف.</div>
+    <button class="primary" id="saveProfileBtn" onclick="saveProfile()">حفظ التعديلات</button>
+    <p class="muted">معرّف حسابك:</p>
+    <div id="userId" style="overflow-wrap:anywhere"></div>
+    <div id="profileStatus" class="status"></div>
+  </div>
 </section>
 </main>
 </div>
@@ -198,15 +210,27 @@ const SUPABASE_URL="https://ayfxtomfqrantxmpqgof.supabase.co";
 const SUPABASE_KEY="sb_publishable_2d8TzhMCRIuc6daKrObBGA_7i0jUIxe";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-let currentUser=null,currentChatUser=null,currentGroup=null;
+let currentUser=null;
+let currentChatUser=null;
+let currentGroup=null;
+let likesByPost={};
+let likedByMe=new Set();
 
-function notice(t){
-  const n=document.getElementById('notice');
-  n.textContent=t;
+function el(id){return document.getElementById(id)}
+
+function notice(message,type="bad"){
+  const n=el('notice');
+  n.textContent=message;
+  n.className=type;
   n.style.display='block';
 }
+function clearNotice(){
+  el('notice').style.display='none';
+}
 function esc(v){
-  return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return String(v??'').replace(/[&<>"']/g,c=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
 }
 function dateText(v){
   if(!v)return '';
@@ -216,79 +240,119 @@ function dateText(v){
 function validUsername(value){
   const name=value.trim();
   const length=Array.from(name).length;
-  if(length<1||length>5){
-    return 'المعرّف لازم يكون من حرف إلى 5 أحرف فقط.';
-  }
-  if(/\s/.test(name)){
-    return 'المعرّف ما يقبل مسافات.';
-  }
+  if(length<1||length>5)return 'المعرّف لازم يكون من حرف إلى 5 أحرف فقط.';
+  if(/\s/.test(name))return 'المعرّف ما يقبل مسافات.';
   return '';
 }
+function showError(prefix,error){
+  console.error(prefix,error);
+  alert(prefix+(error?.message||'خطأ غير معروف'));
+}
+function setBusy(button,busy,text){
+  if(!button)return;
+  if(busy){
+    button.dataset.oldText=button.textContent;
+    button.disabled=true;
+    button.textContent=text||'جاري التنفيذ...';
+  }else{
+    button.disabled=false;
+    button.textContent=button.dataset.oldText||button.textContent;
+  }
+}
+
+/* محاولة تقليل اقتراحات المتصفح */
+function reduceAutofill(){
+  document.querySelectorAll('input').forEach((field,index)=>{
+    field.setAttribute('autocomplete','off');
+    field.setAttribute('autocorrect','off');
+    field.setAttribute('autocapitalize','off');
+    field.setAttribute('spellcheck','false');
+    if(!field.name)field.name='nx-field-'+index+'-'+Math.random().toString(36).slice(2,7);
+  });
+}
+reduceAutofill();
 
 async function signup(){
-  const email=document.getElementById('email').value.trim();
-  const password=document.getElementById('password').value;
-  const username=document.getElementById('username').value.trim();
+  clearNotice();
+  const email=el('email').value.trim();
+  const password=el('password').value;
+  const username=el('username').value.trim();
 
-  if(!email||!password||!username)
-    return notice('اكتب البريد وكلمة المرور والمعرّف.');
-
+  if(!email||!password||!username)return notice('اكتب البريد وكلمة المرور والمعرّف.');
   const validation=validUsername(username);
   if(validation)return notice(validation);
+  if(password.length<6)return notice('كلمة المرور لازم تكون 6 أحرف على الأقل.');
 
-  if(password.length<6)
-    return notice('كلمة المرور لازم تكون 6 أحرف على الأقل.');
-
-  const {data,error}=await db.auth.signUp({
-    email,password,
-    options:{data:{username,display_name:username}}
-  });
-
-  if(error)return notice('تعذّر إنشاء الحساب: '+error.message);
-
-  if(data.session){
-    currentUser=data.user;
-    await enterApp();
-  }else{
-    notice('تم إرسال الطلب. إذا طُلب تأكيد البريد، أكّد حسابك ثم سجّل الدخول.');
+  const button=document.querySelector('#auth button.primary');
+  setBusy(button,true,'جاري إنشاء الحساب...');
+  try{
+    const {data,error}=await db.auth.signUp({
+      email,password,
+      options:{data:{username,display_name:username}}
+    });
+    if(error)return notice('تعذّر إنشاء الحساب: '+error.message);
+    if(data.session&&data.user){
+      currentUser=data.user;
+      await enterApp();
+      notice('تم إنشاء الحساب بنجاح.','good');
+    }else{
+      notice('تم إرسال طلب إنشاء الحساب. إذا كان تأكيد البريد مفعّلًا، أكّد بريدك ثم سجّل الدخول.','good');
+    }
+  }catch(e){
+    notice('صار خطأ: '+(e.message||e));
+  }finally{
+    setBusy(button,false);
   }
 }
 
 async function login(){
-  const email=document.getElementById('email').value.trim();
-  const password=document.getElementById('password').value;
+  clearNotice();
+  const email=el('email').value.trim();
+  const password=el('password').value;
   if(!email||!password)return notice('اكتب البريد وكلمة المرور.');
 
-  const {data,error}=await db.auth.signInWithPassword({email,password});
-  if(error)return notice('تعذّر تسجيل الدخول: '+error.message);
-
-  currentUser=data.user;
-  await enterApp();
+  const button=document.querySelectorAll('#auth button')[1];
+  setBusy(button,true,'جاري تسجيل الدخول...');
+  try{
+    const {data,error}=await db.auth.signInWithPassword({email,password});
+    if(error)return notice('تعذّر تسجيل الدخول: '+error.message);
+    currentUser=data.user;
+    await enterApp();
+  }catch(e){
+    notice('صار خطأ: '+(e.message||e));
+  }finally{
+    setBusy(button,false);
+  }
 }
 
 async function logout(){
-  await db.auth.signOut();
+  const {error}=await db.auth.signOut();
+  if(error)return alert('تعذّر تسجيل الخروج: '+error.message);
   currentUser=null;
-  document.getElementById('app').classList.add('hidden');
-  document.getElementById('auth').classList.remove('hidden');
-  document.getElementById('logoutBtn').hidden=true;
-  document.getElementById('headerUser').textContent='ضيف';
+  currentChatUser=null;
+  currentGroup=null;
+  el('app').classList.add('hidden');
+  el('auth').classList.remove('hidden');
+  el('logoutBtn').hidden=true;
+  el('headerUser').textContent='ضيف';
+  clearNotice();
 }
 
 async function enterApp(){
-  document.getElementById('auth').classList.add('hidden');
-  document.getElementById('app').classList.remove('hidden');
-  document.getElementById('logoutBtn').hidden=false;
-  document.getElementById('headerUser').textContent=currentUser.email||'مستخدم';
-  document.getElementById('userId').textContent=currentUser.id;
-  document.getElementById('profileEmail').textContent=currentUser.email||'';
+  if(!currentUser)return;
+  el('auth').classList.add('hidden');
+  el('app').classList.remove('hidden');
+  el('logoutBtn').hidden=false;
+  el('headerUser').textContent=currentUser.email||'مستخدم';
+  el('userId').textContent=currentUser.id;
+  el('profileEmail').textContent=currentUser.email||'';
   await loadProfile();
   await loadPosts();
 }
 
 function showPage(page,button){
   document.querySelectorAll('main>section').forEach(e=>e.classList.add('hidden'));
-  document.getElementById('page-'+page).classList.remove('hidden');
+  el('page-'+page).classList.remove('hidden');
   document.querySelectorAll('.nav').forEach(e=>e.classList.remove('active'));
   if(button)button.classList.add('active');
   if(page==='feed')loadPosts();
@@ -296,117 +360,208 @@ function showPage(page,button){
   if(page==='friends')loadFriends();
   if(page==='notifications')loadNotifications();
   if(page==='profile')loadProfile();
-  if(page==='messages')document.getElementById('chatPanel').classList.add('hidden');
+  if(page==='messages'&&!currentChatUser)el('chatPanel').classList.add('hidden');
 }
 
 async function loadProfile(){
+  if(!currentUser)return;
+  el('profileEmail').textContent=currentUser.email||'';
+  el('userId').textContent=currentUser.id;
   const {data,error}=await db.from('nexora_profiles')
     .select('*').eq('id',currentUser.id).maybeSingle();
-
-  if(error)console.warn(error.message);
+  if(error)console.warn('تعذّر قراءة الملف الشخصي:',error.message);
 
   const meta=currentUser.user_metadata||{};
   const username=data?.username||meta.username||'';
   const display=data?.display_name||meta.display_name||username||'مستخدم NEXORA';
 
-  document.getElementById('displayName').value=display;
-  document.getElementById('profileUsername').value=username;
-  document.getElementById('profileName').textContent=display;
-  document.getElementById('profileAvatar').textContent=display.charAt(0)||'N';
+  el('displayName').value=display;
+  el('profileUsername').value=username;
+  el('profileName').textContent=display;
+  el('profileAvatar').textContent=Array.from(display)[0]||'N';
+  el('profileStatus').textContent=error?'تعذّرت قراءة بيانات الملف من قاعدة البيانات.':'';
 }
 
 async function saveProfile(){
-  const username=document.getElementById('profileUsername').value.trim();
-  const display_name=document.getElementById('displayName').value.trim();
-
+  if(!currentUser)return alert('سجّل الدخول أول.');
+  const username=el('profileUsername').value.trim();
+  const display_name=el('displayName').value.trim();
   const validation=validUsername(username);
   if(validation)return alert(validation);
   if(!display_name)return alert('اكتب اسم العرض.');
 
-  const {error}=await db.from('nexora_profiles').upsert(
-    {id:currentUser.id,username,display_name},
-    {onConflict:'id'}
-  );
+  const button=el('saveProfileBtn');
+  setBusy(button,true,'جاري الحفظ...');
+  el('profileStatus').textContent='جاري حفظ التعديلات...';
 
-  if(error)return alert('تعذّر حفظ الملف الشخصي: '+error.message);
+  try{
+    const {error}=await db.from('nexora_profiles').upsert({
+      id:currentUser.id,
+      username,
+      display_name
+    },{onConflict:'id'});
 
-  document.getElementById('profileName').textContent=display_name;
-  document.getElementById('profileAvatar').textContent=display_name.charAt(0)||'N';
-  alert('تم حفظ التعديلات.');
+    if(error){
+      el('profileStatus').textContent='فشل الحفظ: '+error.message;
+      return alert('تعذّر حفظ الملف الشخصي:\n'+error.message);
+    }
+
+    const {data,error:authError}=await db.auth.updateUser({
+      data:{username,display_name}
+    });
+    if(!authError&&data?.user)currentUser=data.user;
+
+    el('profileName').textContent=display_name;
+    el('profileAvatar').textContent=Array.from(display_name)[0]||'N';
+    el('headerUser').textContent=display_name;
+    el('profileStatus').textContent='تم حفظ التعديلات.';
+    alert('تم حفظ التعديلات بنجاح.');
+  }catch(e){
+    el('profileStatus').textContent='خطأ: '+(e.message||e);
+    alert('صار خطأ أثناء الحفظ: '+(e.message||e));
+  }finally{
+    setBusy(button,false);
+  }
+}
+
+/* المجتمع */
+async function loadLikes(postIds){
+  likesByPost={};
+  likedByMe=new Set();
+  if(!postIds.length||!currentUser)return;
+  const {data,error}=await db.from('nexora_likes')
+    .select('post_id,user_id').in('post_id',postIds);
+  if(error){
+    console.warn('تعذّر تحميل الإعجابات:',error.message);
+    return;
+  }
+  (data||[]).forEach(row=>{
+    likesByPost[row.post_id]=(likesByPost[row.post_id]||0)+1;
+    if(row.user_id===currentUser.id)likedByMe.add(row.post_id);
+  });
 }
 
 async function loadPosts(){
-  const list=document.getElementById('feedList');
+  if(!currentUser)return;
+  const list=el('feedList');
+  list.textContent='جاري تحميل المنشورات...';
   const {data,error}=await db.from('nexora_posts')
     .select('*').order('created_at',{ascending:false}).limit(50);
 
-  if(error){list.textContent='تعذّر تحميل المنشورات: '+error.message;return;}
-  if(!data?.length){list.innerHTML='<div class="panel muted">ما فيه منشورات للحين.</div>';return;}
+  if(error){
+    list.textContent='تعذّر تحميل المنشورات: '+error.message;
+    return;
+  }
+  if(!data?.length){
+    list.innerHTML='<div class="panel muted">ما فيه منشورات للحين.</div>';
+    return;
+  }
 
-  list.innerHTML=data.map(p=>`
-  <article class="post">
-    <div class="row">
-      <div class="avatar">${esc((p.username||p.display_name||'N').charAt(0))}</div>
-      <div><strong>${esc(p.display_name||p.username||'مستخدم')}</strong>
-      <div class="muted">${esc(dateText(p.created_at))}</div></div>
-    </div>
-    <div class="postbody">${esc(p.content||p.body||p.text||'')}</div>
-    <div class="actions">
-      <button onclick="likePost('${esc(p.id)}')">♡ إعجاب</button>
-      ${p.user_id===currentUser.id||p.author_id===currentUser.id?`<button onclick="deletePost('${esc(p.id)}')">حذف منشوري</button>`:''}
-    </div>
-  </article>`).join('');
+  await loadLikes(data.map(p=>p.id));
+  list.innerHTML=data.map(p=>{
+    const liked=likedByMe.has(p.id);
+    const count=likesByPost[p.id]||0;
+    const owner=p.user_id===currentUser.id||p.author_id===currentUser.id;
+    return `<article class="post">
+      <div class="row">
+        <div class="avatar">${esc(Array.from(p.display_name||p.username||'N')[0]||'N')}</div>
+        <div><strong>${esc(p.display_name||p.username||'مستخدم')}</strong>
+        <div class="muted">${esc(dateText(p.created_at))}</div></div>
+      </div>
+      <div class="postbody">${esc(p.content||p.body||p.text||'')}</div>
+      <div class="actions">
+        <button class="${liked?'liked':''}" onclick="likePost('${esc(p.id)}')">
+          ${liked?'♥ أعجبك':'♡ إعجاب'} · <span>${count}</span>
+        </button>
+        ${owner?`<button onclick="deletePost('${esc(p.id)}')">حذف منشوري</button>`:''}
+      </div>
+    </article>`;
+  }).join('');
 }
 
 async function createPost(){
-  const field=document.getElementById('postText');
+  if(!currentUser)return alert('سجّل الدخول أول.');
+  const field=el('postText');
   const content=field.value.trim();
   if(!content)return alert('اكتب شي قبل النشر.');
 
-  const {data:profile}=await db.from('nexora_profiles')
-    .select('username,display_name').eq('id',currentUser.id).maybeSingle();
+  const button=el('publishBtn');
+  setBusy(button,true,'جاري النشر...');
+  try{
+    const {data:profile,error:profileError}=await db.from('nexora_profiles')
+      .select('username,display_name').eq('id',currentUser.id).maybeSingle();
+    if(profileError)console.warn(profileError.message);
 
-  const row={
-    user_id:currentUser.id,author_id:currentUser.id,
-    username:profile?.username||'مستخدم',
-    display_name:profile?.display_name||'مستخدم',content
-  };
+    const row={
+      user_id:currentUser.id,
+      author_id:currentUser.id,
+      username:profile?.username||currentUser.user_metadata?.username||'مستخدم',
+      display_name:profile?.display_name||currentUser.user_metadata?.display_name||'مستخدم',
+      content
+    };
+    const {error}=await db.from('nexora_posts').insert(row);
+    if(error)return alert('تعذّر النشر: '+error.message);
+    field.value='';
+    await loadPosts();
+  }catch(e){
+    alert('صار خطأ أثناء النشر: '+(e.message||e));
+  }finally{
+    setBusy(button,false);
+  }
+}
 
-  const {error}=await db.from('nexora_posts').insert(row);
-  if(error)return alert('تعذّر النشر: '+error.message);
-  field.value='';
-  await loadPosts();
+async function likePost(postId){
+  if(!currentUser)return alert('سجّل الدخول أول.');
+  const existing=likedByMe.has(postId);
+  try{
+    if(existing){
+      const {error}=await db.from('nexora_likes')
+        .delete().eq('post_id',postId).eq('user_id',currentUser.id);
+      if(error)return alert('تعذّر إلغاء الإعجاب: '+error.message);
+    }else{
+      const {error}=await db.from('nexora_likes')
+        .insert({post_id:postId,user_id:currentUser.id});
+      if(error){
+        if(error.code==='23505'){
+          await loadPosts();
+          return;
+        }
+        return alert('تعذّر تسجيل الإعجاب: '+error.message);
+      }
+    }
+    await loadPosts();
+  }catch(e){
+    alert('صار خطأ في الإعجاب: '+(e.message||e));
+  }
 }
 
 async function deletePost(id){
   if(!confirm('متأكد تبي تحذف المنشور؟'))return;
   const {error}=await db.from('nexora_posts').delete().eq('id',id);
-  if(error)return alert(error.message);
-  loadPosts();
+  if(error)return alert('تعذّر الحذف: '+error.message);
+  await loadPosts();
 }
 
-async function likePost(postId){
-  const {error}=await db.from('nexora_likes').insert({post_id:postId,user_id:currentUser.id});
-  if(error)return alert('تعذّر تسجيل الإعجاب: '+error.message);
-  alert('تم تسجيل الإعجاب.');
-}
-
+/* الدردشة الخاصة */
 async function openChat(){
-  const id=document.getElementById('recipient').value.trim();
+  const id=el('recipient').value.trim();
   if(!id)return alert('اكتب معرّف المستخدم UUID.');
   if(id===currentUser.id)return alert('هذا معرّف حسابك أنت.');
   currentChatUser=id;
-  document.getElementById('chatPanel').classList.remove('hidden');
+  el('chatTitle').textContent='المحادثة';
+  el('chatPanel').classList.remove('hidden');
   await loadChat();
 }
 
 async function loadChat(){
-  if(!currentChatUser)return;
+  if(!currentChatUser||!currentUser)return;
+  const list=el('chatList');
+  list.textContent='جاري تحميل الرسائل...';
+  const a=currentUser.id,b=currentChatUser;
   const {data,error}=await db.from('nexora_messages').select('*')
-    .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${currentChatUser}),and(sender_id.eq.${currentChatUser},receiver_id.eq.${currentUser.id})`)
+    .or(`and(sender_id.eq.${a},receiver_id.eq.${b}),and(sender_id.eq.${b},receiver_id.eq.${a})`)
     .order('created_at',{ascending:true}).limit(100);
 
-  const list=document.getElementById('chatList');
   if(error){list.textContent='تعذّر تحميل الرسائل: '+error.message;return;}
   if(!data?.length){list.innerHTML='<p class="muted">ما فيه رسائل للحين.</p>';return;}
 
@@ -417,10 +572,10 @@ async function loadChat(){
 }
 
 async function sendMessage(){
-  const field=document.getElementById('messageText');
+  if(!currentChatUser)return alert('افتح محادثة أول.');
+  const field=el('messageText');
   const content=field.value.trim();
-  if(!currentChatUser||!content)return;
-
+  if(!content)return;
   const {error}=await db.from('nexora_messages').insert({
     sender_id:currentUser.id,receiver_id:currentChatUser,content
   });
@@ -429,27 +584,29 @@ async function sendMessage(){
   await loadChat();
 }
 
+/* القروبات */
 async function createGroup(){
-  const name=document.getElementById('groupName').value.trim();
+  const name=el('groupName').value.trim();
   if(!name)return alert('اكتب اسم القروب.');
-
   const {data,error}=await db.from('nexora_groups')
     .insert({name,created_by:currentUser.id}).select().single();
   if(error)return alert('تعذّر إنشاء القروب: '+error.message);
 
   const {error:memberError}=await db.from('nexora_group_members')
     .insert({group_id:data.id,user_id:currentUser.id});
-  if(memberError)console.warn(memberError.message);
-
-  document.getElementById('groupName').value='';
+  if(memberError){
+    alert('اننشأ القروب، لكن تعذّرت إضافة عضويتك تلقائيًا: '+memberError.message);
+  }
+  el('groupName').value='';
   await loadGroups();
 }
 
 async function loadGroups(){
-  const list=document.getElementById('groupList');
+  if(!currentUser)return;
+  const list=el('groupList');
+  list.textContent='جاري تحميل القروبات...';
   const {data,error}=await db.from('nexora_groups')
     .select('*').order('created_at',{ascending:false}).limit(100);
-
   if(error){list.textContent='تعذّر تحميل القروبات: '+error.message;return;}
   if(!data?.length){list.textContent='ما فيه قروبات للحين.';return;}
 
@@ -461,65 +618,60 @@ async function loadGroups(){
 
 async function openGroup(id,name){
   currentGroup=id;
-  document.getElementById('groupChatPanel').classList.remove('hidden');
-  document.getElementById('groupChatTitle').textContent=name;
-
+  el('groupChatPanel').classList.remove('hidden');
+  el('groupChatTitle').textContent=name;
   const {data:member,error}=await db.from('nexora_group_members')
     .select('id').eq('group_id',id).eq('user_id',currentUser.id).maybeSingle();
-
-  if(error)return alert(error.message);
-
+  if(error)return alert('تعذّر التحقق من عضويتك: '+error.message);
   if(!member){
     const {error:joinError}=await db.from('nexora_group_members')
       .insert({group_id:id,user_id:currentUser.id});
-    if(joinError)return alert(joinError.message);
+    if(joinError)return alert('تعذّر الانضمام للقروب: '+joinError.message);
   }
   await loadGroupMessages();
 }
 
 async function loadGroupMessages(){
-  if(!currentGroup)return;
-  const list=document.getElementById('groupChatList');
-
+  if(!currentGroup||!currentUser)return;
+  const list=el('groupChatList');
   const {data,error}=await db.from('nexora_group_messages')
     .select('*').eq('group_id',currentGroup)
     .order('created_at',{ascending:true}).limit(100);
-
   if(error){list.textContent='تعذّر تحميل رسائل القروب: '+error.message;return;}
   if(!data?.length){list.innerHTML='<p class="muted">ما فيه رسائل للحين.</p>';return;}
 
   list.innerHTML=data.map(m=>`<div class="item">
-    <div class="muted">${esc(dateText(m.created_at))}</div>
+    <div class="muted">${m.sender_id===currentUser.id||m.user_id===currentUser.id?'أنت':'عضو'} · ${esc(dateText(m.created_at))}</div>
     <div>${esc(m.content||m.message||'')}</div>
   </div>`).join('');
 }
 
 async function sendGroupMessage(){
-  const field=document.getElementById('groupMessageText');
+  if(!currentGroup)return alert('افتح قروب أول.');
+  const field=el('groupMessageText');
   const content=field.value.trim();
-  if(!currentGroup||!content)return;
-
+  if(!content)return;
   const {error}=await db.from('nexora_group_messages').insert({
     group_id:currentGroup,sender_id:currentUser.id,
     user_id:currentUser.id,content
   });
-
-  if(error)return alert('تعذّر إرسال الرسالة: '+error.message);
+  if(error)return alert('تعذّر إرسال رسالة القروب: '+error.message);
   field.value='';
   await loadGroupMessages();
 }
 
+/* الأصدقاء وطلبات الصداقة */
 async function loadFriends(){
-  const list=document.getElementById('friendsList');
+  if(!currentUser)return;
+  const list=el('friendsList');
+  list.textContent='جاري تحميل الأصدقاء...';
   const {data,error}=await db.from('nexora_friends').select('*').limit(200);
-
   if(error){list.textContent='تعذّر تحميل الأصدقاء: '+error.message;return;}
 
   const mine=(data||[]).filter(r=>
     r.user_id===currentUser.id||r.friend_id===currentUser.id||
     r.sender_id===currentUser.id||r.receiver_id===currentUser.id
   );
-
   if(!mine.length){
     list.textContent='ما عندك طلبات أو أصدقاء ظاهرين للحين.';
     return;
@@ -530,37 +682,31 @@ async function loadFriends(){
     const other=r.sender_id===currentUser.id?r.receiver_id:
       (r.user_id===currentUser.id?r.friend_id:
       (r.sender_id||r.user_id||r.receiver_id||r.friend_id));
-
     const status=r.status||r.state||'friend';
     const label=status==='pending'?(incoming?'طلب صداقة وارد':'طلب مرسل'):
-      (status==='accepted'?'صديق':'طلب / علاقة');
-
+      status==='accepted'?'صديق':status==='rejected'?'مرفوض':'طلب / علاقة';
     const actions=status==='pending'&&incoming?
-      `<button onclick="respondFriend('${esc(r.id)}','accepted')">قبول</button>
-       <button onclick="respondFriend('${esc(r.id)}','rejected')">رفض</button>`:'';
-
+      `<button class="primary" onclick="respondFriend('${esc(r.id)}','accepted')">قبول</button>
+       <button class="secondary" onclick="respondFriend('${esc(r.id)}','rejected')">رفض</button>`:'';
     return `<div class="item"><strong>${esc(label)}</strong>
       <div>${esc(other||'معرّف غير معروف')}</div>${actions}</div>`;
   }).join('');
 }
 
 async function sendFriendRequest(){
-  const field=document.getElementById('friendUserId');
+  const field=el('friendUserId');
   const target=field.value.trim();
-
   if(!target)return alert('اكتب معرّف المستخدم UUID.');
   if(target===currentUser.id)return alert('ما تقدر ترسل طلب لنفسك.');
 
   let result=await db.from('nexora_friends').insert({
     sender_id:currentUser.id,receiver_id:target,status:'pending'
   });
-
   if(result.error&&/sender_id|schema cache|does not exist/i.test(result.error.message)){
     result=await db.from('nexora_friends').insert({
       user_id:currentUser.id,friend_id:target,status:'pending'
     });
   }
-
   if(result.error)return alert('تعذّر إرسال طلب الصداقة: '+result.error.message);
   field.value='';
   alert('تم إرسال الطلب.');
@@ -569,16 +715,17 @@ async function sendFriendRequest(){
 
 async function respondFriend(id,status){
   const {error}=await db.from('nexora_friends').update({status}).eq('id',id);
-  if(error)return alert(error.message);
+  if(error)return alert('تعذّر تحديث طلب الصداقة: '+error.message);
   await loadFriends();
 }
 
+/* الإشعارات */
 async function loadNotifications(){
-  const list=document.getElementById('notificationList');
+  if(!currentUser)return;
+  const list=el('notificationList');
   const {data,error}=await db.from('nexora_notifications')
     .select('*').eq('user_id',currentUser.id)
     .order('created_at',{ascending:false}).limit(100);
-
   if(error){list.textContent='تعذّر تحميل الإشعارات: '+error.message;return;}
   if(!data?.length){list.textContent='ما عندك إشعارات للحين.';return;}
 
@@ -589,30 +736,30 @@ async function loadNotifications(){
   </div>`).join('');
 }
 
-/* محاولة تعطيل اقتراحات المتصفح وملء الخانات تلقائياً */
-['username','profileUsername','friendUserId','recipient','email','password'].forEach(id=>{
-  const field=document.getElementById(id);
-  if(field){
-    field.setAttribute('autocomplete','off');
-    field.setAttribute('autocorrect','off');
-    field.setAttribute('autocapitalize','off');
-    field.setAttribute('spellcheck','false');
-  }
-});
-
+/* استعادة الجلسة عند فتح الموقع */
 db.auth.onAuthStateChange((event,session)=>{
   if(session?.user){
     currentUser=session.user;
-    document.getElementById('auth').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    document.getElementById('logoutBtn').hidden=false;
-    document.getElementById('headerUser').textContent=currentUser.email||'مستخدم';
-    document.getElementById('userId').textContent=currentUser.id;
+    el('auth').classList.add('hidden');
+    el('app').classList.remove('hidden');
+    el('logoutBtn').hidden=false;
+    el('headerUser').textContent=currentUser.email||'مستخدم';
+    el('userId').textContent=currentUser.id;
+  }else if(event==='SIGNED_OUT'){
+    currentUser=null;
+    el('app').classList.add('hidden');
+    el('auth').classList.remove('hidden');
+    el('logoutBtn').hidden=true;
+    el('headerUser').textContent='ضيف';
   }
 });
 
 (async()=>{
-  const {data}=await db.auth.getSession();
+  const {data,error}=await db.auth.getSession();
+  if(error){
+    console.error(error.message);
+    return;
+  }
   if(data.session){
     currentUser=data.session.user;
     await enterApp();
