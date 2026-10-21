@@ -10,7 +10,6 @@
 body{margin:0;font-family:Arial,sans-serif;background:#f5f6f8;color:#202124}
 button,input,textarea{font:inherit}
 button{cursor:pointer;border:0;border-radius:10px;padding:11px 15px}
-button:disabled{opacity:.5;cursor:wait}
 .primary{background:#17191d;color:white}
 .secondary{background:#e9ebef;color:#222}
 input,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;background:white;outline:none;margin:6px 0}
@@ -42,14 +41,12 @@ h3{font-size:16px;margin:0 0 8px}
 #notice{padding:12px;border-radius:10px;margin:10px 0;background:#eee;display:none;overflow-wrap:anywhere}
 .item{padding:13px 0;border-bottom:1px solid #eee}
 .item:last-child{border-bottom:0}
-#mobileNav{display:none}
 footer{text-align:center;color:#888;padding:20px;font-size:12px}
 @media(max-width:700px){
  #layout{display:block;margin:12px auto}
  aside{position:static;margin-bottom:12px;display:flex;overflow:auto;gap:4px}
  .nav{width:auto;white-space:nowrap;margin:0}
  header{padding:0 13px}
- #mobileNav{display:block}
 }
 </style>
 </head>
@@ -68,25 +65,23 @@ footer{text-align:center;color:#888;padding:20px;font-size:12px}
     <h1>NEXORA OS</h1>
     <p class="muted">مساحتك الخاصة للتواصل والمجتمع.</p>
     <div id="notice"></div>
-    <div id="authFields">
-      <input id="email" type="email" placeholder="البريد الإلكتروني" autocomplete="email">
-      <input id="password" type="password" placeholder="كلمة المرور" autocomplete="current-password">
-      <input id="username" placeholder="اسم المستخدم (للحساب الجديد)" maxlength="30">
-      <button class="primary" style="width:100%;margin-top:8px" onclick="signup()">إنشاء حساب</button>
-      <button class="secondary" style="width:100%;margin-top:8px" onclick="login()">تسجيل الدخول</button>
-    </div>
+    <input id="email" type="email" placeholder="البريد الإلكتروني" autocomplete="email">
+    <input id="password" type="password" placeholder="كلمة المرور" autocomplete="current-password">
+    <input id="username" placeholder="اسم المستخدم للحساب الجديد" maxlength="30">
+    <button class="primary" style="width:100%;margin-top:8px" onclick="signup()">إنشاء حساب</button>
+    <button class="secondary" style="width:100%;margin-top:8px" onclick="login()">تسجيل الدخول</button>
   </div>
 </section>
 
 <div id="app" class="hidden">
   <div id="layout">
     <aside>
-      <button class="nav active" data-page="feed" onclick="showPage('feed',this)">⌂ المجتمع</button>
-      <button class="nav" data-page="messages" onclick="showPage('messages',this)">✉ الدردشة</button>
-      <button class="nav" data-page="groups" onclick="showPage('groups',this)">◉ القروبات</button>
-      <button class="nav" data-page="friends" onclick="showPage('friends',this)">♙ الأصدقاء</button>
-      <button class="nav" data-page="notifications" onclick="showPage('notifications',this)">♧ الإشعارات</button>
-      <button class="nav" data-page="profile" onclick="showPage('profile',this)">◉ حسابي</button>
+      <button class="nav active" onclick="showPage('feed',this)">⌂ المجتمع</button>
+      <button class="nav" onclick="showPage('messages',this)">✉ الدردشة</button>
+      <button class="nav" onclick="showPage('groups',this)">◉ القروبات</button>
+      <button class="nav" onclick="showPage('friends',this)">♙ الأصدقاء</button>
+      <button class="nav" onclick="showPage('notifications',this)">♧ الإشعارات</button>
+      <button class="nav" onclick="showPage('profile',this)">◉ حسابي</button>
     </aside>
 
     <main>
@@ -99,7 +94,7 @@ footer{text-align:center;color:#888;padding:20px;font-size:12px}
             <button class="primary" onclick="createPost()">نشر</button>
           </div>
         </div>
-        <div id="feedList"><div class="panel muted">جاري تحميل المنشورات...</div></div>
+        <div id="feedList"></div>
       </section>
 
       <section id="page-messages" class="hidden">
@@ -196,24 +191,21 @@ function notice(message){
   box.textContent=message;
   box.style.display='block';
 }
-function clearNotice(){
-  const box=document.getElementById('notice');
-  box.textContent='';
-  box.style.display='none';
-}
+
 function esc(value){
   return String(value ?? '').replace(/[&<>"']/g,c=>({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   }[c]));
 }
+
 function dateText(value){
-  if(!value) return '';
+  if(!value)return '';
   const date=new Date(value);
   return isNaN(date.getTime())?'':date.toLocaleString('ar-SA');
 }
 
 async function signup(){
-  clearNotice();
+  document.getElementById('notice').style.display='none';
   const email=document.getElementById('email').value.trim();
   const password=document.getElementById('password').value;
   const username=document.getElementById('username').value.trim();
@@ -230,7 +222,7 @@ async function signup(){
   const {data,error}=await db.auth.signUp({
     email,
     password,
-    options:{data:{username:username,display_name:username}}
+    options:{data:{username,display_name:username}}
   });
 
   if(error){
@@ -242,12 +234,12 @@ async function signup(){
     currentUser=data.user;
     await enterApp();
   }else{
-    notice('تم إرسال طلب إنشاء الحساب. إذا كان تأكيد البريد مفعّلًا، افتح بريدك وأكّد الحساب ثم سجّل الدخول.');
+    notice('تم إنشاء الطلب. إذا طُلب تأكيد البريد، أكّد بريدك ثم سجّل الدخول.');
   }
 }
 
 async function login(){
-  clearNotice();
+  document.getElementById('notice').style.display='none';
   const email=document.getElementById('email').value.trim();
   const password=document.getElementById('password').value;
 
@@ -282,14 +274,12 @@ async function logout(){
 
 async function enterApp(){
   if(!currentUser)return;
-
   document.getElementById('auth').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   document.getElementById('logoutBtn').hidden=false;
   document.getElementById('headerUser').textContent=currentUser.email||'مستخدم';
   document.getElementById('userId').textContent=currentUser.id;
   document.getElementById('profileEmail').textContent=currentUser.email||'';
-
   await loadProfile();
   await loadPosts();
 }
@@ -305,20 +295,18 @@ function showPage(page,button){
   if(page==='friends')loadFriends();
   if(page==='notifications')loadNotifications();
   if(page==='profile')loadProfile();
-  if(page==='messages'){
-    document.getElementById('chatPanel').classList.add('hidden');
-  }
+  if(page==='messages')document.getElementById('chatPanel').classList.add('hidden');
 }
 
 async function loadProfile(){
   if(!currentUser)return;
 
+  const meta=currentUser.user_metadata||{};
   const {data,error}=await db.from('nexora_profiles')
     .select('*').eq('id',currentUser.id).maybeSingle();
 
-  if(error)console.warn('Profile:',error.message);
+  if(error)console.warn('Profile load:',error.message);
 
-  const meta=currentUser.user_metadata||{};
   const username=data?.username||meta.username||'';
   const display=data?.display_name||meta.display_name||username||'مستخدم NEXORA';
 
@@ -326,6 +314,8 @@ async function loadProfile(){
   document.getElementById('profileUsername').value=username;
   document.getElementById('profileName').textContent=display;
   document.getElementById('profileAvatar').textContent=(display||'N').charAt(0);
+  document.getElementById('profileEmail').textContent=currentUser.email||'';
+  document.getElementById('userId').textContent=currentUser.id;
 }
 
 async function saveProfile(){
@@ -342,38 +332,30 @@ async function saveProfile(){
     return;
   }
 
-  // نحفظ بيانات الحساب أولًا داخل Supabase Auth
-  const authResult=await db.auth.updateUser({
+  // نحفظ الاسم في بيانات الحساب أولاً، عشان ما يعتمد على جدول الملفات الشخصية.
+  const {data,error}=await db.auth.updateUser({
     data:{username,display_name}
   });
 
-  if(authResult.error){
-    alert('تعذّر حفظ بيانات الحساب: '+authResult.error.message);
+  if(error){
+    alert('تعذّر حفظ الاسم في الحساب: '+error.message);
     return;
   }
 
-  currentUser={
-    ...currentUser,
-    user_metadata:{
-      ...(currentUser.user_metadata||{}),
-      username,
-      display_name
-    }
-  };
-
+  currentUser=data.user;
   document.getElementById('profileName').textContent=display_name;
   document.getElementById('profileAvatar').textContent=display_name.charAt(0);
 
-  // نحاول كذلك تحديث جدول الملف الشخصي
-  const profileResult=await db.from('nexora_profiles').upsert({
+  // نحاول حفظ نسخة في الجدول؛ فشل الجدول لا يلغي حفظ الاسم في الحساب.
+  const {error:tableError}=await db.from('nexora_profiles').upsert({
     id:currentUser.id,
     username,
     display_name
   },{onConflict:'id'});
 
-  if(profileResult.error){
-    console.error('nexora_profiles save error:',profileResult.error);
-    alert('تم حفظ الاسم داخل حسابك، لكن جدول nexora_profiles رفض الحفظ.\nالسبب: '+profileResult.error.message);
+  if(tableError){
+    console.error('nexora_profiles:',tableError.message);
+    alert('تم حفظ الاسم داخل الحساب. لكن جدول nexora_profiles رفض النسخة الإضافية. الاسم محفوظ في بيانات الحساب.');
     return;
   }
 
@@ -388,7 +370,7 @@ async function loadPosts(){
     .select('*').order('created_at',{ascending:false}).limit(50);
 
   if(error){
-    list.innerHTML='<div class="panel">تعذّر تحميل المنشورات. تأكد من وجود جدول nexora_posts وصلاحيات القراءة في Supabase.</div>';
+    list.innerHTML='<div class="panel">تعذّر تحميل المنشورات. تأكد من جدول nexora_posts وصلاحياته.</div>';
     console.error(error);
     return;
   }
@@ -411,8 +393,7 @@ async function loadPosts(){
       <div class="actions">
         <button onclick="likePost('${esc(post.id)}')">♡ إعجاب</button>
         ${post.user_id===currentUser?.id||post.author_id===currentUser?.id
-          ?`<button onclick="deletePost('${esc(post.id)}')">حذف منشوري</button>`
-          :''}
+          ?`<button onclick="deletePost('${esc(post.id)}')">حذف منشوري</button>`:''}
       </div>
     </article>
   `).join('');
@@ -428,9 +409,7 @@ async function createPost(){
   }
 
   const {data:profile}=await db.from('nexora_profiles')
-    .select('username,display_name')
-    .eq('id',currentUser.id)
-    .maybeSingle();
+    .select('username,display_name').eq('id',currentUser.id).maybeSingle();
 
   const row={
     user_id:currentUser.id,
@@ -443,7 +422,7 @@ async function createPost(){
   const {error}=await db.from('nexora_posts').insert(row);
 
   if(error){
-    alert('تعذّر النشر: '+error.message+'\nتأكد من أسماء أعمدة جدول nexora_posts.');
+    alert('تعذّر النشر: '+error.message);
     return;
   }
 
@@ -461,7 +440,7 @@ async function deletePost(id){
     return;
   }
 
-  loadPosts();
+  await loadPosts();
 }
 
 async function likePost(postId){
@@ -475,8 +454,7 @@ async function likePost(postId){
       alert('أنت مسوي إعجاب من قبل.');
       return;
     }
-
-    alert('تعذّر تسجيل الإعجاب: '+error.message+'\nراجع أعمدة جدول nexora_likes في Supabase.');
+    alert('تعذّر تسجيل الإعجاب: '+error.message);
     return;
   }
 
@@ -498,7 +476,6 @@ async function openChat(){
   currentChatUser=id;
   document.getElementById('chatPanel').classList.remove('hidden');
   document.getElementById('chatTitle').textContent='المحادثة';
-
   await loadChat();
 }
 
@@ -512,7 +489,7 @@ async function loadChat(){
   const list=document.getElementById('chatList');
 
   if(error){
-    list.innerHTML='<p class="muted">تعذّر تحميل الرسائل. تأكد من أعمدة sender_id وreceiver_id وcontent في جدول nexora_messages.</p>';
+    list.textContent='تعذّر تحميل الرسائل. راجع أعمدة sender_id وreceiver_id وcontent في nexora_messages.';
     console.error(error);
     return;
   }
@@ -573,16 +550,12 @@ async function createGroup(){
     return;
   }
 
-  const groupId=data.id;
-
   const {error:memberError}=await db.from('nexora_group_members').insert({
-    group_id:groupId,
+    group_id:data.id,
     user_id:currentUser.id
   });
 
-  if(memberError){
-    console.warn('تعذّر إضافة منشئ المجموعة إلى الأعضاء:',memberError.message);
-  }
+  if(memberError)console.warn(memberError.message);
 
   document.getElementById('groupName').value='';
   await loadGroups();
@@ -595,7 +568,7 @@ async function loadGroups(){
     .select('*').order('created_at',{ascending:false}).limit(100);
 
   if(error){
-    list.textContent='تعذّر تحميل المجموعات. تأكد من إعداد جدول nexora_groups.';
+    list.textContent='تعذّر تحميل المجموعات. تأكد من جدول nexora_groups.';
     console.error(error);
     return;
   }
@@ -652,11 +625,10 @@ async function loadGroupMessages(){
   const list=document.getElementById('groupChatList');
 
   const {data,error}=await db.from('nexora_group_messages').select('*')
-    .eq('group_id',currentGroup)
-    .order('created_at',{ascending:true}).limit(100);
+    .eq('group_id',currentGroup).order('created_at',{ascending:true}).limit(100);
 
   if(error){
-    list.innerHTML='<p class="muted">تعذّر تحميل الرسائل. تأكد من أعمدة جدول nexora_group_messages.</p>';
+    list.textContent='تعذّر تحميل رسائل المجموعة. تأكد من جدول nexora_group_messages.';
     console.error(error);
     return;
   }
@@ -705,7 +677,7 @@ async function loadFriends(){
   const {data,error}=await db.from('nexora_friends').select('*').limit(200);
 
   if(error){
-    list.textContent='تعذّر تحميل الأصدقاء. جدول nexora_friends موجود، لكن نحتاج مطابقة أعمدته وصلاحياته. الخطأ: '+error.message;
+    list.textContent='تعذّر تحميل الأصدقاء: '+error.message;
     return;
   }
 
@@ -722,34 +694,28 @@ async function loadFriends(){
   }
 
   list.innerHTML=mine.map(r=>{
-    const incoming=(r.receiver_id===currentUser.id || r.friend_id===currentUser.id);
-    const other=r.sender_id===currentUser.id
-      ?r.receiver_id
-      :(r.user_id===currentUser.id
-        ?r.friend_id
-        :(r.sender_id||r.user_id||r.receiver_id||r.friend_id));
+    const incoming=(r.receiver_id===currentUser.id||r.friend_id===currentUser.id);
+    const other=r.sender_id===currentUser.id?r.receiver_id:
+      (r.user_id===currentUser.id?r.friend_id:
+      (r.sender_id||r.user_id||r.receiver_id||r.friend_id));
 
     const status=r.status||r.state||'friend';
-    const label=status==='pending'
-      ?(incoming?'طلب صداقة وارد':'طلب مرسل')
-      :(status==='accepted'?'صديق':'طلب / علاقة');
+    const label=status==='pending'?(incoming?'طلب صداقة وارد':'طلب مرسل'):
+      (status==='accepted'?'صديق':'طلب / علاقة');
 
-    const actions=(status==='pending'&&incoming)
-      ?`<button class="primary" onclick="respondFriend('${esc(r.id)}','accepted')">قبول</button>
-        <button class="secondary" onclick="respondFriend('${esc(r.id)}','rejected')">رفض</button>`
-      :'';
+    const actions=(status==='pending'&&incoming)?
+      `<button class="primary" onclick="respondFriend('${esc(r.id)}','accepted')">قبول</button>
+       <button class="secondary" onclick="respondFriend('${esc(r.id)}','rejected')">رفض</button>`:'';
 
-    return `
-      <div class="item">
-        <div class="row" style="justify-content:space-between">
-          <div>
-            <strong>${esc(label)}</strong>
-            <div class="muted" style="overflow-wrap:anywhere">${esc(other||'معرّف غير معروف')}</div>
-          </div>
-          <div>${actions}</div>
+    return `<div class="item">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <strong>${esc(label)}</strong>
+          <div class="muted" style="overflow-wrap:anywhere">${esc(other||'معرّف غير معروف')}</div>
         </div>
+        <div>${actions}</div>
       </div>
-    `;
+    </div>`;
   }).join('');
 }
 
@@ -771,7 +737,6 @@ async function sendFriendRequest(){
     return;
   }
 
-  // نجرب أسماء الأعمدة الشائعة فقط إذا كان الخطأ متعلقًا بالأعمدة
   let result=await db.from('nexora_friends').insert({
     sender_id:currentUser.id,
     receiver_id:target,
@@ -787,15 +752,7 @@ async function sendFriendRequest(){
   }
 
   if(result.error){
-    console.error('Friend request error:',result.error);
-    const msg=result.error.message||'خطأ غير معروف';
-
-    if(/row-level security|rls|permission denied|not allowed/i.test(msg)){
-      alert('قاعدة البيانات تمنع إرسال الطلب بسبب الصلاحيات (RLS). ما أقدر أتجاوزها من صفحة الموقع.\nالتفاصيل: '+msg);
-    }else{
-      alert('ما انرسل طلب الصداقة لأن أعمدة جدول nexora_friends ما تطابق الكود أو فيه خطأ بقاعدة البيانات.\nالتفاصيل: '+msg);
-    }
-
+    alert('ما انرسل طلب الصداقة: '+result.error.message);
     return;
   }
 
@@ -823,7 +780,7 @@ async function loadNotifications(){
     .order('created_at',{ascending:false}).limit(100);
 
   if(error){
-    list.textContent='تعذّر تحميل الإشعارات. تأكد من أعمدة جدول nexora_notifications.';
+    list.textContent='تعذّر تحميل الإشعارات: '+error.message;
     console.error(error);
     return;
   }
@@ -855,7 +812,6 @@ db.auth.onAuthStateChange((event,session)=>{
 
 (async()=>{
   const {data}=await db.auth.getSession();
-
   if(data.session){
     currentUser=data.session.user;
     await enterApp();
