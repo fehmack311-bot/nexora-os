@@ -68,14 +68,18 @@ header{padding:0 13px}
     <div id="notice"></div>
 
     <form id="authForm" autocomplete="off" onsubmit="return false">
-      <input id="email" type="email" placeholder="البريد الإلكتروني" autocomplete="email">
-      <input id="password" type="password" placeholder="كلمة المرور" autocomplete="current-password">
+      <input id="email" type="email" placeholder="البريد الإلكتروني"
+        autocomplete="off" name="nx-email-field">
 
-      <label for="username">معرّف الحساب (1–4 أحرف)</label>
-      <input id="username" placeholder="مثال: nx7" maxlength="4"
-        minlength="1" autocomplete="off" autocapitalize="off"
-        spellcheck="false" aria-describedby="usernameHelp">
-      <div id="usernameHelp" class="counter">الحد الأقصى 4 أحرف.</div>
+      <input id="password" type="password" placeholder="كلمة المرور"
+        autocomplete="new-password" name="nx-password-field">
+
+      <label for="username">معرّف الحساب (من 1 إلى 5 أحرف)</label>
+      <input id="username" placeholder="مثال: nx123"
+        maxlength="5" minlength="1"
+        autocomplete="new-password" name="nx-new-handle"
+        autocorrect="off" autocapitalize="off" spellcheck="false">
+      <div class="counter">الحد الأقصى 5 أحرف.</div>
 
       <button type="button" class="primary" style="width:100%;margin-top:8px" onclick="signup()">إنشاء حساب</button>
       <button type="button" class="secondary" style="width:100%;margin-top:8px" onclick="login()">تسجيل الدخول</button>
@@ -108,7 +112,9 @@ header{padding:0 13px}
 <div class="panel">
 <h2>الدردشة</h2>
 <p class="muted">اكتب معرّف المستخدم UUID للشخص اللي تبي تراسله.</p>
-<input id="recipient" placeholder="معرّف المستخدم UUID" autocomplete="off" autocapitalize="off" spellcheck="false">
+<input id="recipient" placeholder="معرّف المستخدم UUID"
+  autocomplete="off" name="nx-chat-recipient"
+  autocorrect="off" autocapitalize="off" spellcheck="false">
 <button class="primary" onclick="openChat()">فتح المحادثة</button>
 </div>
 <div id="chatPanel" class="panel hidden">
@@ -123,7 +129,7 @@ header{padding:0 13px}
 <section id="page-groups" class="hidden">
 <div class="panel">
 <h2>القروبات</h2>
-<input id="groupName" placeholder="اسم القروب">
+<input id="groupName" placeholder="اسم القروب" autocomplete="off">
 <button class="primary" onclick="createGroup()">إنشاء قروب</button>
 </div>
 <div class="panel">
@@ -143,8 +149,8 @@ header{padding:0 13px}
 <div class="panel">
 <h2>الأصدقاء</h2>
 <input id="friendUserId" placeholder="معرّف المستخدم UUID"
-  autocomplete="off" autocapitalize="off" spellcheck="false"
-  name="nexora-friend-id">
+  autocomplete="off" name="nx-friend-identifier"
+  autocorrect="off" autocapitalize="off" spellcheck="false">
 <button class="primary" onclick="sendFriendRequest()">إرسال طلب صداقة</button>
 </div>
 <div class="panel">
@@ -170,11 +176,12 @@ header{padding:0 13px}
 <p class="muted" id="profileEmail"></p>
 <label for="displayName">اسم العرض</label>
 <input id="displayName" placeholder="اسم العرض" autocomplete="off">
-<label for="profileUsername">معرّف المستخدم (1–4 أحرف)</label>
+<label for="profileUsername">معرّف المستخدم (من 1 إلى 5 أحرف)</label>
 <input id="profileUsername" placeholder="معرّف المستخدم"
-  maxlength="4" minlength="1" autocomplete="off"
-  autocapitalize="off" spellcheck="false">
-<div class="counter">الحد الأقصى 4 أحرف.</div>
+  maxlength="5" minlength="1"
+  autocomplete="new-password" name="nx-profile-handle"
+  autocorrect="off" autocapitalize="off" spellcheck="false">
+<div class="counter">الحد الأقصى 5 أحرف.</div>
 <button class="primary" onclick="saveProfile()">حفظ التعديلات</button>
 <p class="muted">معرّف حسابك:</p>
 <div id="userId" style="overflow-wrap:anywhere"></div>
@@ -209,8 +216,8 @@ function dateText(v){
 function validUsername(value){
   const name=value.trim();
   const length=Array.from(name).length;
-  if(length<1||length>4){
-    return 'المعرّف لازم يكون من حرف إلى 4 أحرف فقط.';
+  if(length<1||length>5){
+    return 'المعرّف لازم يكون من حرف إلى 5 أحرف فقط.';
   }
   if(/\s/.test(name)){
     return 'المعرّف ما يقبل مسافات.';
@@ -246,6 +253,7 @@ async function signup(){
     notice('تم إرسال الطلب. إذا طُلب تأكيد البريد، أكّد حسابك ثم سجّل الدخول.');
   }
 }
+
 async function login(){
   const email=document.getElementById('email').value.trim();
   const password=document.getElementById('password').value;
@@ -257,6 +265,7 @@ async function login(){
   currentUser=data.user;
   await enterApp();
 }
+
 async function logout(){
   await db.auth.signOut();
   currentUser=null;
@@ -265,6 +274,7 @@ async function logout(){
   document.getElementById('logoutBtn').hidden=true;
   document.getElementById('headerUser').textContent='ضيف';
 }
+
 async function enterApp(){
   document.getElementById('auth').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
@@ -275,6 +285,7 @@ async function enterApp(){
   await loadProfile();
   await loadPosts();
 }
+
 function showPage(page,button){
   document.querySelectorAll('main>section').forEach(e=>e.classList.add('hidden'));
   document.getElementById('page-'+page).classList.remove('hidden');
@@ -287,11 +298,12 @@ function showPage(page,button){
   if(page==='profile')loadProfile();
   if(page==='messages')document.getElementById('chatPanel').classList.add('hidden');
 }
+
 async function loadProfile(){
   const {data,error}=await db.from('nexora_profiles')
     .select('*').eq('id',currentUser.id).maybeSingle();
 
-  if(error){console.warn(error.message);}
+  if(error)console.warn(error.message);
 
   const meta=currentUser.user_metadata||{};
   const username=data?.username||meta.username||'';
@@ -302,6 +314,7 @@ async function loadProfile(){
   document.getElementById('profileName').textContent=display;
   document.getElementById('profileAvatar').textContent=display.charAt(0)||'N';
 }
+
 async function saveProfile(){
   const username=document.getElementById('profileUsername').value.trim();
   const display_name=document.getElementById('displayName').value.trim();
@@ -321,6 +334,7 @@ async function saveProfile(){
   document.getElementById('profileAvatar').textContent=display_name.charAt(0)||'N';
   alert('تم حفظ التعديلات.');
 }
+
 async function loadPosts(){
   const list=document.getElementById('feedList');
   const {data,error}=await db.from('nexora_posts')
@@ -343,6 +357,7 @@ async function loadPosts(){
     </div>
   </article>`).join('');
 }
+
 async function createPost(){
   const field=document.getElementById('postText');
   const content=field.value.trim();
@@ -362,17 +377,20 @@ async function createPost(){
   field.value='';
   await loadPosts();
 }
+
 async function deletePost(id){
   if(!confirm('متأكد تبي تحذف المنشور؟'))return;
   const {error}=await db.from('nexora_posts').delete().eq('id',id);
   if(error)return alert(error.message);
   loadPosts();
 }
+
 async function likePost(postId){
   const {error}=await db.from('nexora_likes').insert({post_id:postId,user_id:currentUser.id});
   if(error)return alert('تعذّر تسجيل الإعجاب: '+error.message);
   alert('تم تسجيل الإعجاب.');
 }
+
 async function openChat(){
   const id=document.getElementById('recipient').value.trim();
   if(!id)return alert('اكتب معرّف المستخدم UUID.');
@@ -381,6 +399,7 @@ async function openChat(){
   document.getElementById('chatPanel').classList.remove('hidden');
   await loadChat();
 }
+
 async function loadChat(){
   if(!currentChatUser)return;
   const {data,error}=await db.from('nexora_messages').select('*')
@@ -396,6 +415,7 @@ async function loadChat(){
     <div>${esc(m.content||m.message||'')}</div>
   </div>`).join('');
 }
+
 async function sendMessage(){
   const field=document.getElementById('messageText');
   const content=field.value.trim();
@@ -408,6 +428,7 @@ async function sendMessage(){
   field.value='';
   await loadChat();
 }
+
 async function createGroup(){
   const name=document.getElementById('groupName').value.trim();
   if(!name)return alert('اكتب اسم القروب.');
@@ -423,6 +444,7 @@ async function createGroup(){
   document.getElementById('groupName').value='';
   await loadGroups();
 }
+
 async function loadGroups(){
   const list=document.getElementById('groupList');
   const {data,error}=await db.from('nexora_groups')
@@ -436,6 +458,7 @@ async function loadGroups(){
     <button class="secondary" onclick="openGroup('${esc(g.id)}','${esc(g.name)}')">فتح</button>
   </div>`).join('');
 }
+
 async function openGroup(id,name){
   currentGroup=id;
   document.getElementById('groupChatPanel').classList.remove('hidden');
@@ -453,6 +476,7 @@ async function openGroup(id,name){
   }
   await loadGroupMessages();
 }
+
 async function loadGroupMessages(){
   if(!currentGroup)return;
   const list=document.getElementById('groupChatList');
@@ -469,6 +493,7 @@ async function loadGroupMessages(){
     <div>${esc(m.content||m.message||'')}</div>
   </div>`).join('');
 }
+
 async function sendGroupMessage(){
   const field=document.getElementById('groupMessageText');
   const content=field.value.trim();
@@ -483,6 +508,7 @@ async function sendGroupMessage(){
   field.value='';
   await loadGroupMessages();
 }
+
 async function loadFriends(){
   const list=document.getElementById('friendsList');
   const {data,error}=await db.from('nexora_friends').select('*').limit(200);
@@ -517,6 +543,7 @@ async function loadFriends(){
       <div>${esc(other||'معرّف غير معروف')}</div>${actions}</div>`;
   }).join('');
 }
+
 async function sendFriendRequest(){
   const field=document.getElementById('friendUserId');
   const target=field.value.trim();
@@ -539,11 +566,13 @@ async function sendFriendRequest(){
   alert('تم إرسال الطلب.');
   await loadFriends();
 }
+
 async function respondFriend(id,status){
   const {error}=await db.from('nexora_friends').update({status}).eq('id',id);
   if(error)return alert(error.message);
   await loadFriends();
 }
+
 async function loadNotifications(){
   const list=document.getElementById('notificationList');
   const {data,error}=await db.from('nexora_notifications')
@@ -560,8 +589,8 @@ async function loadNotifications(){
   </div>`).join('');
 }
 
-/* منع اقتراحات المتصفح في خانات المعرّفات */
-['username','profileUsername','friendUserId','recipient'].forEach(id=>{
+/* محاولة تعطيل اقتراحات المتصفح وملء الخانات تلقائياً */
+['username','profileUsername','friendUserId','recipient','email','password'].forEach(id=>{
   const field=document.getElementById(id);
   if(field){
     field.setAttribute('autocomplete','off');
