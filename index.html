@@ -1,281 +1,587 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NEXORA OS</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+:root{--bg:#f5f6f8;--card:#fff;--text:#20232b;--muted:#777f8c;--line:#e7e9ee;--blue:#3569e8;--soft:#eef2ff}
 *{box-sizing:border-box}
-body{margin:0;background:#f4f6fa;color:#202938;font-family:Arial,sans-serif}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
 button,input,textarea{font:inherit}
-button{cursor:pointer;border:1px solid #dce1e9;border-radius:10px;padding:10px 14px;background:white;color:#202938}
-button:hover{background:#eef3ff}
-header{background:#fff;padding:15px 20px;border-bottom:1px solid #e2e6ee;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.logo{font-size:23px;font-weight:bold;color:#3269dc}
-main{max-width:1100px;margin:auto;padding:20px}
-.card{background:white;border:1px solid #e2e6ee;border-radius:16px;padding:18px;margin-bottom:16px}
-h2{margin-top:0;font-size:20px}
-input,textarea{width:100%;padding:12px;border:1px solid #d7dce5;border-radius:10px;margin:6px 0 12px;background:#fff}
-textarea{resize:vertical;min-height:85px}
-.primary{background:#3269dc;color:white;border-color:#3269dc}
-.primary:hover{background:#2556bb}
-.muted{color:#727d8d;font-size:13px}
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-.tab.active{background:#3269dc;color:white}
+button{cursor:pointer;border:0;border-radius:11px;padding:11px 15px;transition:.15s}
+button:disabled{opacity:.55;cursor:wait}
+.primary{background:var(--blue);color:white}
+.primary:hover{filter:brightness(.93)}
+.secondary{background:#f0f1f4;color:var(--text)}
+input,textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:11px;padding:12px;margin:7px 0 13px;outline:none}
+input:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #3569e817}
+textarea{resize:vertical}
+header{height:68px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:sticky;top:0;z-index:5}
+.logo{font-size:23px;font-weight:800;letter-spacing:.3px}.logo span{color:var(--blue)}
+.userhead{display:flex;align-items:center;gap:10px}
+.avatar{width:43px;height:43px;border-radius:50%;background:var(--soft);color:var(--blue);display:grid;place-items:center;font-weight:bold;flex-shrink:0}
+#auth{max-width:440px;margin:8vh auto;padding:16px}
+.authbox,.panel,aside{background:var(--card);border:1px solid var(--line);border-radius:17px}
+.authbox{padding:27px}
+.authbox h1{margin:0 0 8px}
+.muted{font-size:13px;color:var(--muted);line-height:1.7}
+#notice{display:none;background:#fff1f0;border:1px solid #ffd6d2;padding:12px;border-radius:10px;margin:12px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+#layout{max-width:1120px;margin:23px auto;padding:0 16px;display:grid;grid-template-columns:220px minmax(0,760px);gap:20px}
+aside{padding:11px;height:max-content;position:sticky;top:85px}
+.nav{width:100%;display:flex;gap:10px;align-items:center;text-align:right;background:transparent;margin:3px 0;padding:13px}
+.nav:hover,.nav.active{background:var(--soft);color:var(--blue)}
+main{min-width:0}
+.panel{padding:19px;margin-bottom:15px}
+h2{font-size:20px;margin:0 0 15px}
+h3{font-size:16px;margin:0 0 10px}
+.row{display:flex;align-items:center;gap:11px}
+.row>*{min-width:0}
+.between{justify-content:space-between}
 .hidden{display:none!important}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}
-.app{border:1px solid #e4e8f0;border-radius:14px;padding:15px;background:#fff;text-align:center}
-.app .emoji{font-size:30px;margin-bottom:8px}
-#status{white-space:pre-wrap;font-size:14px;margin-top:10px}
-.post{padding:13px 0;border-bottom:1px solid #eee}
-#messages{height:260px;overflow:auto;border:1px solid #e5e8ee;border-radius:10px;padding:10px;margin-bottom:10px}
-.bubble{background:#edf2ff;border-radius:12px;padding:9px;margin:7px 0;overflow-wrap:anywhere}
-@media(max-width:600px){main{padding:12px}header{padding:12px}.card{padding:14px}}
+.post{padding:16px 0;border-bottom:1px solid var(--line)}
+.post:last-child{border-bottom:0}
+.postbody{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;margin:14px 0}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.actions button{background:#f3f4f7;padding:8px 12px}
+.item{padding:13px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.item:last-child{border-bottom:0}
+.bubble{max-width:85%;padding:11px 13px;border-radius:15px;background:#f0f1f5;margin:9px 0;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7}
+.bubble.mine{background:var(--soft);margin-right:auto}
+.chatbox{max-height:360px;overflow:auto;padding:8px;border:1px solid var(--line);border-radius:12px;margin:14px 0}
+footer{text-align:center;padding:22px;color:var(--muted);font-size:12px}
+@media(max-width:720px){
+ #layout{display:block;margin:12px auto;padding:0 10px}
+ aside{position:static;display:flex;overflow-x:auto;gap:3px;margin-bottom:12px}
+ .nav{width:auto;white-space:nowrap;flex-shrink:0;padding:11px}
+ header{padding:0 12px}
+ .panel{padding:14px}
+ .authbox{padding:20px}
+}
 </style>
 </head>
 <body>
 <header>
-  <div class="logo">NEXORA OS</div>
-  <div>
-    <span id="userLabel" class="muted">غير مسجل الدخول</span>
-    <button id="logoutBtn" class="hidden" onclick="logout()">خروج</button>
-  </div>
+ <div class="logo">NEXORA <span>OS</span></div>
+ <div class="userhead">
+  <span id="headerUser" class="muted">زائر</span>
+  <button id="logoutBtn" class="secondary hidden" onclick="logout()">خروج</button>
+ </div>
 </header>
 
-<main>
-<section id="authCard" class="card">
-  <h2>أهلًا بك في NEXORA</h2>
-  <p class="muted">سجّل دخولك أو أنشئ حسابًا جديدًا.</p>
-  <label>البريد الإلكتروني</label>
+<section id="auth">
+ <div class="authbox">
+  <h1>NEXORA OS</h1>
+  <p class="muted">مجتمعك ومحادثاتك في مكان واحد.</p>
+  <div id="notice"></div>
+  <label for="email">البريد الإلكتروني</label>
   <input id="email" type="email" placeholder="name@example.com" autocomplete="email">
-  <label>كلمة المرور</label>
+  <label for="password">كلمة المرور</label>
   <input id="password" type="password" placeholder="6 أحرف على الأقل" autocomplete="current-password">
-  <div class="tabs">
-    <button class="primary" onclick="signup()">إنشاء حساب</button>
-    <button onclick="login()">تسجيل الدخول</button>
+  <div id="signupExtra">
+   <label for="signupUsername">اسم المستخدم</label>
+   <input id="signupUsername" maxlength="30" placeholder="اختر اسم مستخدم">
   </div>
-  <div id="authStatus" class="muted"></div>
+  <button class="primary" style="width:100%" onclick="signup()">إنشاء حساب</button>
+  <button class="secondary" style="width:100%;margin-top:8px" onclick="login()">تسجيل الدخول</button>
+ </div>
 </section>
 
-<section id="appArea" class="hidden">
-  <div class="card">
-    <h2>ملفي الشخصي</h2>
-    <label>اسم المستخدم</label>
-    <input id="username" placeholder="اسم المستخدم">
-    <label>الاسم الظاهر</label>
-    <input id="displayName" placeholder="الاسم اللي يظهر للآخرين">
-    <button class="primary" onclick="saveProfile()">حفظ الاسم</button>
-    <div id="profileStatus" class="muted"></div>
-  </div>
+<div id="app" class="hidden">
+ <div id="layout">
+  <aside>
+   <button class="nav active" onclick="showPage('feed',this)">⌂ المجتمع</button>
+   <button class="nav" onclick="showPage('messages',this)">✉ الدردشة</button>
+   <button class="nav" onclick="showPage('groups',this)">◉ القروبات</button>
+   <button class="nav" onclick="showPage('friends',this)">♙ الأصدقاء</button>
+   <button class="nav" onclick="showPage('notifications',this)">♧ الإشعارات</button>
+   <button class="nav" onclick="showPage('profile',this)">◉ حسابي</button>
+  </aside>
 
-  <div class="tabs" id="tabs">
-    <button class="tab active" onclick="showTab('home',this)">الرئيسية</button>
-    <button class="tab" onclick="showTab('store',this)">المتجر</button>
-    <button class="tab" onclick="showTab('games',this)">الألعاب</button>
-    <button class="tab" onclick="showTab('community',this)">المجتمع</button>
-    <button class="tab" onclick="showTab('chat',this)">المحادثات</button>
-    <button class="tab" onclick="showTab('groups',this)">المجموعات</button>
-  </div>
-
-  <section id="home" class="panel">
-    <div class="card">
-      <h2>مرحبًا في NEXORA OS</h2>
-      <p>نظامك الشخصي للتطبيقات والألعاب والتواصل.</p>
-      <div class="grid">
-        <div class="app"><div class="emoji">🛍️</div>المتجر</div>
-        <div class="app"><div class="emoji">🎮</div>الألعاب</div>
-        <div class="app"><div class="emoji">💬</div>المحادثات</div>
-        <div class="app"><div class="emoji">👥</div>المجتمع</div>
-      </div>
+  <main>
+   <section id="page-feed">
+    <div class="panel">
+     <h2>المجتمع</h2>
+     <textarea id="postText" rows="3" maxlength="3000" placeholder="وش ودك تشارك اليوم؟"></textarea>
+     <div class="row between">
+      <span class="muted">شارك أفكارك مع المجتمع</span>
+      <button class="primary" onclick="createPost()">نشر</button>
+     </div>
     </div>
-  </section>
+    <div id="feedList" class="panel muted">جاري تحميل المنشورات...</div>
+   </section>
 
-  <section id="store" class="panel hidden">
-    <div class="card">
-      <h2>متجر التطبيقات</h2>
-      <p class="muted">100 تطبيق معروض. التطبيقات الداخلية هنا واجهات مبدئية وليست برامج مستقلة مثبتة على الجهاز.</p>
-      <div id="appsGrid" class="grid"></div>
+   <section id="page-messages" class="hidden">
+    <div class="panel">
+     <h2>الدردشة</h2>
+     <p class="muted">اكتب معرّف حساب الشخص لفتح المحادثة معه.</p>
+     <label for="recipient">معرّف المستخدم UUID</label>
+     <input id="recipient" placeholder="معرّف حساب الشخص">
+     <button class="primary" onclick="openChat()">فتح المحادثة</button>
     </div>
-  </section>
+    <div id="chatPanel" class="panel hidden">
+     <div class="row between">
+      <h3 id="chatTitle">المحادثة</h3>
+      <button class="secondary" onclick="loadChat()">تحديث</button>
+     </div>
+     <div id="chatList" class="chatbox"></div>
+     <textarea id="messageText" rows="2" maxlength="3000" placeholder="اكتب رسالتك..."></textarea>
+     <button class="primary" onclick="sendMessage()">إرسال الرسالة</button>
+    </div>
+   </section>
 
-  <section id="games" class="panel hidden">
-    <div class="card">
-      <h2>متجر الألعاب</h2>
-      <p class="muted">50 لعبة معروضة. تقدر تفتح الألعاب المصغرة المتاحة داخل الموقع.</p>
-      <div id="gamesGrid" class="grid"></div>
-      <div id="gameArea"></div>
+   <section id="page-groups" class="hidden">
+    <div class="panel">
+     <h2>القروبات</h2>
+     <label for="groupName">اسم القروب الجديد</label>
+     <input id="groupName" maxlength="80" placeholder="مثال: قروب الأصدقاء">
+     <button class="primary" onclick="createGroup()">إنشاء قروب</button>
     </div>
-  </section>
+    <div class="panel">
+     <h3>القروبات المتاحة</h3>
+     <div id="groupList" class="muted">جاري التحميل...</div>
+    </div>
+    <div id="groupChatPanel" class="panel hidden">
+     <h3 id="groupChatTitle">رسائل القروب</h3>
+     <div id="groupChatList" class="chatbox"></div>
+     <textarea id="groupMessageText" rows="2" placeholder="اكتب رسالة للقروب"></textarea>
+     <button class="primary" onclick="sendGroupMessage()">إرسال</button>
+     <button class="secondary" onclick="loadGroupMessages()">تحديث</button>
+    </div>
+   </section>
 
-  <section id="community" class="panel hidden">
-    <div class="card">
-      <h2>المجتمع</h2>
-      <textarea id="postText" placeholder="وش ودك تشارك؟"></textarea>
-      <button class="primary" onclick="addPost()">نشر</button>
-      <div id="posts"></div>
+   <section id="page-friends" class="hidden">
+    <div class="panel">
+     <h2>الأصدقاء</h2>
+     <p class="muted">أرسل طلب صداقة باستخدام معرّف الحساب.</p>
+     <input id="friendUserId" placeholder="معرّف المستخدم UUID">
+     <button class="primary" onclick="sendFriendRequest()">إرسال طلب صداقة</button>
     </div>
-  </section>
+    <div class="panel">
+     <h3>طلبات الصداقة</h3>
+     <div id="friendsList" class="muted">جاري التحميل...</div>
+    </div>
+   </section>
 
-  <section id="chat" class="panel hidden">
-    <div class="card">
-      <h2>المحادثات</h2>
-      <label>البريد الإلكتروني للمستلم</label>
-      <input id="recipient" type="email" placeholder="بريد الشخص الثاني">
-      <div id="messages"></div>
-      <textarea id="messageText" placeholder="اكتب رسالتك..."></textarea>
-      <button class="primary" onclick="sendMessage()">إرسال</button>
-      <button onclick="loadMessages()">تحديث الرسائل</button>
-      <p class="muted">المحادثة تحتاج إعداد جدول الرسائل وسياسات Supabase المناسبة.</p>
+   <section id="page-notifications" class="hidden">
+    <div class="panel">
+     <h2>الإشعارات</h2>
+     <div id="notificationList" class="muted">جاري التحميل...</div>
     </div>
-  </section>
+   </section>
 
-  <section id="groups" class="panel hidden">
-    <div class="card">
-      <h2>المجموعات</h2>
-      <input id="groupName" placeholder="اسم المجموعة الجديدة">
-      <button class="primary" onclick="createGroup()">إنشاء مجموعة</button>
-      <div id="groupsList"></div>
+   <section id="page-profile" class="hidden">
+    <div class="panel">
+     <h2>حسابي</h2>
+     <div class="row" style="margin-bottom:18px">
+      <div class="avatar" id="profileAvatar">N</div>
+      <div><strong id="profileName">مستخدم NEXORA</strong><div class="muted" id="profileEmail"></div></div>
+     </div>
+     <label for="displayName">الاسم الظاهر</label>
+     <input id="displayName" maxlength="60" placeholder="اسمك الظاهر">
+     <label for="profileUsername">اسم المستخدم</label>
+     <input id="profileUsername" maxlength="30" placeholder="اسم المستخدم">
+     <button class="primary" onclick="saveProfile()">حفظ التعديلات</button>
+     <p class="muted">معرّف حسابك، تقدر تشاركه مع أصدقائك:</p>
+     <div id="userId" style="overflow-wrap:anywhere;font-size:12px"></div>
+     <button class="secondary" style="margin-top:10px" onclick="copyUserId()">نسخ معرّف الحساب</button>
     </div>
-  </section>
-</section>
-<div id="status"></div>
-</main>
+   </section>
+  </main>
+ </div>
+</div>
+<footer>NEXORA OS</footer>
 
 <script>
-const SUPABASE_URL='https://ayfxtomfqrantxmpqgof.supabase.co';
-const SUPABASE_KEY='sb_publishable_2d8TzhMCRIuc6daKrObBGA_7i0jUIxe';
+const SUPABASE_URL="https://ayfxtomfqrantxmpqgof.supabase.co";
+const SUPABASE_KEY="sb_publishable_2d8TzhMCRIuc6daKrObBGA_7i0jUIxe";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
 let currentUser=null;
+let currentChatUser=null;
+let currentGroup=null;
 
 const $=id=>document.getElementById(id);
-function message(id,text){$(id).textContent=text}
-function safe(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-
+function notice(text){
+ $("notice").textContent=text;
+ $("notice").style.display="block";
+}
+function clearNotice(){
+ $("notice").textContent="";
+ $("notice").style.display="none";
+}
+function esc(value){
+ return String(value??"").replace(/[&<>"']/g,c=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ }[c]));
+}
+function dateText(value){
+ if(!value)return "";
+ const d=new Date(value);
+ return isNaN(d.getTime())?"":d.toLocaleString("ar-SA");
+}
+function currentName(){
+ const m=currentUser?.user_metadata||{};
+ return m.display_name||m.username||currentUser?.email||"مستخدم";
+}
 async function signup(){
- const email=$('email').value.trim(),password=$('password').value;
- if(!email||password.length<6){message('authStatus','اكتب بريدك وكلمة مرور من 6 أحرف على الأقل.');return}
- message('authStatus','جاري إنشاء الحساب...');
- const {data,error}=await db.auth.signUp({email,password});
- if(error){message('authStatus',error.message);return}
- if(data.session){currentUser=data.user;await startApp()}
- else message('authStatus','إذا طلب Supabase تأكيد البريد، افتح بريدك وأكّد الحساب ثم سجّل الدخول.')
+ clearNotice();
+ const email=$("email").value.trim();
+ const password=$("password").value;
+ const username=$("signupUsername").value.trim();
+ if(!email||!password||!username){notice("اكتب البريد وكلمة المرور واسم المستخدم.");return}
+ if(password.length<6){notice("كلمة المرور لازم تكون 6 أحرف على الأقل.");return}
+ const {data,error}=await db.auth.signUp({
+  email,password,options:{data:{username,display_name:username}}
+ });
+ if(error){notice("تعذّر إنشاء الحساب: "+error.message);return}
+ if(data.session){
+  currentUser=data.user;
+  await enterApp();
+ }else{
+  notice("تم إرسال طلب إنشاء الحساب. إذا طلب تأكيد البريد، أكّد حسابك ثم سجّل الدخول.");
+ }
 }
 async function login(){
- const email=$('email').value.trim(),password=$('password').value;
- message('authStatus','جاري تسجيل الدخول...');
+ clearNotice();
+ const email=$("email").value.trim();
+ const password=$("password").value;
+ if(!email||!password){notice("اكتب البريد الإلكتروني وكلمة المرور.");return}
  const {data,error}=await db.auth.signInWithPassword({email,password});
- if(error){message('authStatus',error.message);return}
- currentUser=data.user;await startApp()
+ if(error){notice("تعذّر تسجيل الدخول: "+error.message);return}
+ currentUser=data.user;
+ await enterApp();
 }
 async function logout(){
- await db.auth.signOut();currentUser=null;
- $('appArea').classList.add('hidden');$('authCard').classList.remove('hidden');
- $('logoutBtn').classList.add('hidden');message('userLabel','غير مسجل الدخول')
+ const {error}=await db.auth.signOut();
+ if(error){notice(error.message);return}
+ currentUser=null;
+ currentChatUser=null;
+ currentGroup=null;
+ $("app").classList.add("hidden");
+ $("auth").classList.remove("hidden");
+ $("logoutBtn").classList.add("hidden");
+ $("headerUser").textContent="زائر";
 }
-async function startApp(){
+async function enterApp(){
  if(!currentUser)return;
- $('authCard').classList.add('hidden');$('appArea').classList.remove('hidden');
- $('logoutBtn').classList.remove('hidden');message('userLabel',currentUser.email||'مستخدم');
+ $("auth").classList.add("hidden");
+ $("app").classList.remove("hidden");
+ $("logoutBtn").classList.remove("hidden");
+ $("headerUser").textContent=currentName();
+ $("userId").textContent=currentUser.id;
+ $("profileEmail").textContent=currentUser.email||"";
+ await loadProfile();
+ await loadPosts();
+}
+function showPage(page,button){
+ document.querySelectorAll("main>section").forEach(s=>s.classList.add("hidden"));
+ $("page-"+page).classList.remove("hidden");
+ document.querySelectorAll(".nav").forEach(b=>b.classList.remove("active"));
+ if(button)button.classList.add("active");
+ if(page==="feed")loadPosts();
+ if(page==="groups")loadGroups();
+ if(page==="friends")loadFriends();
+ if(page==="notifications")loadNotifications();
+ if(page==="profile")loadProfile();
+ if(page==="messages")$("chatPanel").classList.add("hidden");
+}
+async function loadProfile(){
+ if(!currentUser)return;
  const meta=currentUser.user_metadata||{};
- $('username').value=meta.username||'';
- $('displayName').value=meta.display_name||'';
- try{
-  const {data}=await db.from('nexora_profiles').select('*').eq('id',currentUser.id).maybeSingle();
-  if(data){$('username').value=data.username||$('username').value;$('displayName').value=data.display_name||$('displayName').value}
- }catch(e){}
- renderApps();renderGames();await loadPosts();await loadMessages();await loadGroups()
+ let profile=null;
+ // لا نخلي تعذّر قراءة الجدول يمنع ظهور الاسم المحفوظ في الحساب.
+ const {data,error}=await db.from("nexora_profiles")
+  .select("*").eq("id",currentUser.id).maybeSingle();
+ if(!error)profile=data;
+ const username=profile?.username||meta.username||"";
+ const display=profile?.display_name||meta.display_name||username||"مستخدم NEXORA";
+ $("displayName").value=display;
+ $("profileUsername").value=username;
+ $("profileName").textContent=display;
+ $("profileAvatar").textContent=(display||"N").charAt(0);
 }
 async function saveProfile(){
- if(!currentUser){message('profileStatus','سجّل الدخول أولًا.');return}
- const username=$('username').value.trim();
- const display_name=$('displayName').value.trim();
- if(!username||!display_name){message('profileStatus','اكتب اسم المستخدم والاسم الظاهر.');return}
- message('profileStatus','جاري الحفظ...');
- const {data,error}=await db.auth.updateUser({data:{username,display_name}});
- if(error){message('profileStatus','تعذر حفظ الاسم بالحساب: '+error.message);return}
- currentUser=data.user||currentUser;
- const {error:tableError}=await db.from('nexora_profiles').upsert({
-  id:currentUser.id,username,display_name
- },{onConflict:'id'});
- if(tableError){
-  message('profileStatus','الاسم محفوظ بالحساب، لكن جدول nexora_profiles ما زال يرفض الحفظ. نحتاج نطابق إعدادات الجدول.');
- }else message('profileStatus','تم حفظ الاسم بنجاح.');
+ if(!currentUser){alert("سجّل الدخول أولًا.");return}
+ const username=$("profileUsername").value.trim();
+ const display_name=$("displayName").value.trim();
+ if(!username||!display_name){alert("اكتب اسم المستخدم والاسم الظاهر.");return}
+
+ // الحفظ الأساسي في حساب Supabase.
+ const auth=await db.auth.updateUser({data:{username,display_name}});
+ if(auth.error){alert("تعذّر حفظ الاسم: "+auth.error.message);return}
+ currentUser=auth.data.user||currentUser;
+ $("profileName").textContent=display_name;
+ $("profileAvatar").textContent=display_name.charAt(0);
+ $("headerUser").textContent=display_name;
+
+ // مزامنة الملف الشخصي مع الجدول.
+ let result=await db.from("nexora_profiles").upsert(
+  {id:currentUser.id,username,display_name},{onConflict:"id"}
+ );
+ if(result.error && /column .*id.*does not exist|could not find the .*id.*column|on conflict/i.test(result.error.message||"")){
+  result=await db.from("nexora_profiles").upsert(
+   {user_id:currentUser.id,username,display_name},{onConflict:"user_id"}
+  );
+ }
+ if(result.error){
+  console.error("nexora_profiles:",result.error);
+  alert("الاسم محفوظ في حساب Supabase، لكن جدول nexora_profiles رفض المزامنة.\nالسبب: "+result.error.message);
+  return;
+ }
+ alert("تم حفظ الاسم في الحساب والملف الشخصي.");
 }
-function showTab(id,btn){
- document.querySelectorAll('.panel').forEach(el=>el.classList.add('hidden'));
- $(id).classList.remove('hidden');
- document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
- btn.classList.add('active')
-}
-function renderApps(){
- const names=['الملاحظات','الآلة الحاسبة','التقويم','الطقس','الساعة','المهام','الملفات','الصور','الموسيقى','الفيديو','الرسام','الترجمة','القاموس','الأخبار','الخرائط','التعلم','القراءة','الكتابة','المتصفح','البريد','المذكرات','المصروفات','المتجر','المجتمع','المحادثات','المجموعات','الملف الشخصي','الإعدادات','المساعد الذكي','الاختبارات'];
- const icons=['📝','🧮','📅','🌤️','⏰','✅','📁','🖼️','🎵','🎬','🎨','🌐','📚','📰','🗺️'];
- $('appsGrid').innerHTML=Array.from({length:100},(_,i)=>`<div class="app"><div class="emoji">${icons[i%icons.length]}</div><strong>${safe(names[i%names.length])} ${i>=names.length?i+1:''}</strong><p class="muted">تطبيق NEXORA</p><button onclick="openApp(${i})">فتح</button></div>`).join('')
-}
-function openApp(i){
- const names=['الملاحظات','الآلة الحاسبة','التقويم','الطقس','الساعة'];
- const name=names[i%names.length];
- if(name==='الملاحظات'){
-  const old=localStorage.getItem('nx_notes')||'';
-  const value=prompt('ملاحظاتك (تُحفظ على هذا الجهاز):',old);
-  if(value!==null)localStorage.setItem('nx_notes',value)
- }else if(name==='الآلة الحاسبة'){
-  const a=prompt('اكتب عملية حسابية بسيطة مثل 5+3');
-  if(a&&/^[0-9+\-*/().\s]+$/.test(a)){try{alert('النتيجة: '+Function('"use strict";return ('+a+')')())}catch(e){alert('عملية غير صحيحة')}}
- }else if(name==='الساعة'){alert(new Date().toLocaleString('ar-SA'))}
- else alert(name+' — الواجهة جاهزة، لكن تحتاج برمجة خاصة لتفعيل وظائف إضافية.')
-}
-function renderGames(){
- const names=['لعبة الأرقام','تحدي الذاكرة','حجر ورقة مقص','خمن الرقم','اختبار السرعة'];
- const icons=['🔢','🧠','✊','🎯','⚡'];
- $('gamesGrid').innerHTML=Array.from({length:50},(_,i)=>`<div class="app"><div class="emoji">${icons[i%icons.length]}</div><strong>${names[i%names.length]} ${i>=names.length?i+1:''}</strong><p class="muted">لعبة مصغرة</p><button onclick="playGame(${i})">العب</button></div>`).join('')
-}
-function playGame(i){
- const n=i%5;
- if(n===0){const x=prompt('كم ناتج 7 + 8؟');alert(x==='15'?'صح عليك!':'الإجابة 15')}
- else if(n===1){alert('تحدي الذاكرة: احفظ الأرقام 3 8 1 ثم اكتبها في المربع التالي.');const x=prompt('اكتب الأرقام بالترتيب');alert(x==='381'?'ممتاز!':'حاول مرة ثانية')}
- else if(n===2){const a=['حجر','ورقة','مقص'],me=prompt('اكتب حجر أو ورقة أو مقص'),cpu=a[Math.floor(Math.random()*3)];alert('اختيار الكمبيوتر: '+cpu+'\n'+(me===cpu?'تعادل':((me==='حجر'&&cpu==='مقص')||(me==='ورقة'&&cpu==='حجر')||(me==='مقص'&&cpu==='ورقة')?'فزت!':'حاول مرة ثانية')))}
- else if(n===3){const num=Math.floor(Math.random()*10)+1;const x=Number(prompt('خمن رقم من 1 إلى 10'));alert(x===num?'صحيح!':'الرقم كان '+num)}
- else{const start=Date.now();prompt('اضغط موافق بأسرع وقت بعد ما تستعد');alert('وقتك: '+((Date.now()-start)/1000).toFixed(2)+' ثانية')}
-}
-async function addPost(){
- const content=$('postText').value.trim();if(!content)return;
- const {error}=await db.from('nexora_posts').insert({user_id:currentUser.id,content});
- if(error){alert('تعذر النشر: '+error.message);return}
- $('postText').value='';await loadPosts()
+async function copyUserId(){
+ if(!currentUser)return;
+ try{
+  await navigator.clipboard.writeText(currentUser.id);
+  alert("تم نسخ معرّف الحساب.");
+ }catch(e){
+  prompt("انسخ معرّف حسابك:",currentUser.id);
+ }
 }
 async function loadPosts(){
- const {data,error}=await db.from('nexora_posts').select('*').order('created_at',{ascending:false}).limit(50);
- if(error){message('posts','ما قدرنا نحمّل المنشورات. تأكد من جدول nexora_posts وصلاحياته.');return}
- $('posts').innerHTML=(data||[]).map(p=>`<div class="post"><div>${safe(p.content||p.body||'')}</div><p class="muted">${safe(p.created_at||'')}</p></div>`).join('')||'<p class="muted">ما فيه منشورات للحين.</p>'
+ const list=$("feedList");
+ list.textContent="جاري تحميل المنشورات...";
+ const {data,error}=await db.from("nexora_posts")
+  .select("*").order("created_at",{ascending:false}).limit(50);
+ if(error){
+  list.textContent="تعذّر تحميل المنشورات. راجع جدول nexora_posts وصلاحيات القراءة.";
+  console.error(error);return;
+ }
+ if(!data?.length){list.textContent="ما فيه منشورات للحين. كن أول واحد ينشر!";return}
+ list.innerHTML=data.map(p=>`
+  <article class="post">
+   <div class="row">
+    <div class="avatar">${esc((p.display_name||p.username||"N").charAt(0))}</div>
+    <div><strong>${esc(p.display_name||p.username||"مستخدم")}</strong>
+     <div class="muted">${esc(dateText(p.created_at))}</div>
+    </div>
+   </div>
+   <div class="postbody">${esc(p.content||p.body||p.text||"")}</div>
+   <div class="actions">
+    <button onclick="likePost('${esc(p.id)}')">♡ إعجاب</button>
+    ${(p.user_id===currentUser.id||p.author_id===currentUser.id)?`<button onclick="deletePost('${esc(p.id)}')">حذف منشوري</button>`:""}
+   </div>
+  </article>`).join("");
+}
+async function createPost(){
+ const content=$("postText").value.trim();
+ if(!content){alert("اكتب منشورك أولًا.");return}
+ const meta=currentUser.user_metadata||{};
+ const {data:profile}=await db.from("nexora_profiles")
+  .select("username,display_name").eq("id",currentUser.id).maybeSingle();
+ const row={
+  user_id:currentUser.id,
+  author_id:currentUser.id,
+  username:profile?.username||meta.username||"مستخدم",
+  display_name:profile?.display_name||meta.display_name||"مستخدم",
+  content
+ };
+ const {error}=await db.from("nexora_posts").insert(row);
+ if(error){alert("تعذّر النشر: "+error.message);return}
+ $("postText").value="";
+ await loadPosts();
+}
+async function deletePost(id){
+ if(!confirm("متأكد تبي تحذف المنشور؟"))return;
+ const {error}=await db.from("nexora_posts").delete().eq("id",id);
+ if(error){alert("تعذّر الحذف: "+error.message);return}
+ await loadPosts();
+}
+async function likePost(postId){
+ const {error}=await db.from("nexora_likes").insert({post_id:postId,user_id:currentUser.id});
+ if(error){
+  alert(error.code==="23505"?"أنت مسوي إعجاب من قبل.":"تعذّر تسجيل الإعجاب: "+error.message);
+  return;
+ }
+ alert("تم تسجيل الإعجاب.");
+}
+async function openChat(){
+ const id=$("recipient").value.trim();
+ if(!id){alert("اكتب معرّف المستخدم.");return}
+ if(id===currentUser.id){alert("هذا معرّف حسابك أنت.");return}
+ currentChatUser=id;
+ $("chatPanel").classList.remove("hidden");
+ $("chatTitle").textContent="محادثة مع "+id.slice(0,8)+"…";
+ await loadChat();
+}
+async function loadChat(){
+ if(!currentChatUser)return;
+ const list=$("chatList");
+ list.textContent="جاري تحميل الرسائل...";
+ const {data,error}=await db.from("nexora_messages").select("*")
+  .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${currentChatUser}),and(sender_id.eq.${currentChatUser},receiver_id.eq.${currentUser.id})`)
+  .order("created_at",{ascending:true}).limit(100);
+ if(error){list.textContent="تعذّر تحميل الرسائل: "+error.message;return}
+ if(!data?.length){list.textContent="ابدأ المحادثة بإرسال أول رسالة.";return}
+ list.innerHTML=data.map(m=>`
+  <div class="bubble ${m.sender_id===currentUser.id?"mine":""}">
+   <div class="muted">${m.sender_id===currentUser.id?"أنت":"الطرف الآخر"} · ${esc(dateText(m.created_at))}</div>
+   ${esc(m.content||m.message||"")}
+  </div>`).join("");
+ list.scrollTop=list.scrollHeight;
 }
 async function sendMessage(){
- const email=$('recipient').value.trim(),content=$('messageText').value.trim();
- if(!email||!content){alert('اكتب بريد المستلم والرسالة');return}
- const {error}=await db.from('nexora_messages').insert({sender_id:currentUser.id,recipient_email:email,content});
- if(error){alert('تعذر إرسال الرسالة: '+error.message);return}
- $('messageText').value='';await loadMessages()
-}
-async function loadMessages(){
- if(!currentUser)return;
- const {data,error}=await db.from('nexora_messages').select('*').order('created_at',{ascending:true}).limit(100);
- if(error){$('messages').innerHTML='<p class="muted">المراسلة تحتاج إعداد جدول nexora_messages وصلاحياته.</p>';return}
- $('messages').innerHTML=(data||[]).map(m=>`<div class="bubble">${m.sender_id===currentUser.id?'أنا':'مستخدم'}: ${safe(m.content||m.message||'')}</div>`).join('')
+ if(!currentChatUser)return;
+ const field=$("messageText");
+ const content=field.value.trim();
+ if(!content)return;
+ const {error}=await db.from("nexora_messages").insert({
+  sender_id:currentUser.id,receiver_id:currentChatUser,content
+ });
+ if(error){alert("تعذّر إرسال الرسالة: "+error.message);return}
+ field.value="";
+ await loadChat();
 }
 async function createGroup(){
- const name=$('groupName').value.trim();if(!name)return;
- const {error}=await db.from('nexora_groups').insert({name,created_by:currentUser.id});
- if(error){alert('تعذر إنشاء المجموعة: '+error.message);return}
- $('groupName').value='';await loadGroups()
+ const name=$("groupName").value.trim();
+ if(!name){alert("اكتب اسم القروب.");return}
+ const {data,error}=await db.from("nexora_groups").insert({
+  name,created_by:currentUser.id
+ }).select().single();
+ if(error){alert("تعذّر إنشاء القروب: "+error.message);return}
+ const member=await db.from("nexora_group_members").insert({
+  group_id:data.id,user_id:currentUser.id
+ });
+ if(member.error)console.warn("إضافة منشئ القروب:",member.error.message);
+ $("groupName").value="";
+ await loadGroups();
 }
 async function loadGroups(){
- const {data,error}=await db.from('nexora_groups').select('*').order('created_at',{ascending:false}).limit(100);
- if(error){$('groupsList').innerHTML='<p class="muted">تأكد من جدول nexora_groups وصلاحياته.</p>';return}
- $('groupsList').innerHTML=(data||[]).map(g=>`<div class="post"><strong>${safe(g.name)}</strong><p class="muted">${safe(g.created_at||'')}</p></div>`).join('')||'<p class="muted">ما فيه مجموعات للحين.</p>'
+ const list=$("groupList");
+ list.textContent="جاري تحميل القروبات...";
+ const {data,error}=await db.from("nexora_groups")
+  .select("*").order("created_at",{ascending:false}).limit(100);
+ if(error){list.textContent="تعذّر تحميل القروبات: "+error.message;return}
+ if(!data?.length){list.textContent="ما فيه قروبات للحين.";return}
+ list.innerHTML=data.map(g=>`
+  <div class="item">
+   <div class="row between">
+    <div><strong>${esc(g.name)}</strong><div class="muted">${esc(dateText(g.created_at))}</div></div>
+    <button class="secondary" onclick="openGroup('${esc(g.id)}','${esc(g.name)}')">فتح القروب</button>
+   </div>
+  </div>`).join("");
 }
-db.auth.getSession().then(({data})=>{if(data.session){currentUser=data.session.user;startApp()}});
-db.auth.onAuthStateChange((_event,session)=>{if(session){currentUser=session.user}else{currentUser=null}});
+async function openGroup(id,name){
+ currentGroup=id;
+ $("groupChatPanel").classList.remove("hidden");
+ $("groupChatTitle").textContent=name;
+ const {data:membership,error}=await db.from("nexora_group_members")
+  .select("id").eq("group_id",id).eq("user_id",currentUser.id).maybeSingle();
+ if(error){alert("تعذّر التحقق من عضوية القروب: "+error.message);return}
+ if(!membership){
+  const {error:joinError}=await db.from("nexora_group_members").insert({group_id:id,user_id:currentUser.id});
+  if(joinError){alert("تعذّر الانضمام للقروب: "+joinError.message);return}
+ }
+ await loadGroupMessages();
+}
+async function loadGroupMessages(){
+ if(!currentGroup)return;
+ const list=$("groupChatList");
+ const {data,error}=await db.from("nexora_group_messages").select("*")
+  .eq("group_id",currentGroup).order("created_at",{ascending:true}).limit(100);
+ if(error){list.textContent="تعذّر تحميل رسائل القروب: "+error.message;return}
+ if(!data?.length){list.textContent="ما فيه رسائل للحين.";return}
+ list.innerHTML=data.map(m=>`
+  <div class="bubble ${m.sender_id===currentUser.id||m.user_id===currentUser.id?"mine":""}">
+   <div class="muted">${esc(dateText(m.created_at))}</div>
+   ${esc(m.content||m.message||"")}
+  </div>`).join("");
+ list.scrollTop=list.scrollHeight;
+}
+async function sendGroupMessage(){
+ if(!currentGroup)return;
+ const field=$("groupMessageText");
+ const content=field.value.trim();
+ if(!content)return;
+ const {error}=await db.from("nexora_group_messages").insert({
+  group_id:currentGroup,sender_id:currentUser.id,user_id:currentUser.id,content
+ });
+ if(error){alert("تعذّر إرسال الرسالة: "+error.message);return}
+ field.value="";
+ await loadGroupMessages();
+}
+async function loadFriends(){
+ const list=$("friendsList");
+ list.textContent="جاري تحميل طلبات الصداقة...";
+ const {data,error}=await db.from("nexora_friends").select("*").limit(300);
+ if(error){list.textContent="تعذّر تحميل الأصدقاء: "+error.message;return}
+ const mine=(data||[]).filter(r=>
+  r.user_id===currentUser.id||r.friend_id===currentUser.id||
+  r.sender_id===currentUser.id||r.receiver_id===currentUser.id
+ );
+ if(!mine.length){list.textContent="ما عندك طلبات صداقة للحين.";return}
+ list.innerHTML=mine.map(r=>{
+  const incoming=r.receiver_id===currentUser.id||r.friend_id===currentUser.id;
+  const other=r.sender_id===currentUser.id?r.receiver_id:
+   r.user_id===currentUser.id?r.friend_id:(r.sender_id||r.user_id||r.receiver_id||r.friend_id);
+  const status=r.status||r.state||"pending";
+  const label=status==="pending"?(incoming?"طلب صداقة وارد":"طلب مرسل"):
+   status==="accepted"?"صديق":status;
+  const actions=status==="pending"&&incoming?
+   `<button class="primary" onclick="respondFriend('${esc(r.id)}','accepted')">قبول</button>
+    <button class="secondary" onclick="respondFriend('${esc(r.id)}','rejected')">رفض</button>`:"";
+  return `<div class="item"><div class="row between">
+   <div><strong>${esc(label)}</strong><div class="muted">${esc(other||"معرّف غير معروف")}</div></div>
+   <div>${actions}</div>
+  </div></div>`;
+ }).join("");
+}
+async function sendFriendRequest(){
+ const target=$("friendUserId").value.trim();
+ if(!target){alert("اكتب معرّف المستخدم.");return}
+ if(target===currentUser.id){alert("ما تقدر ترسل طلب لنفسك.");return}
+ let result=await db.from("nexora_friends").insert({
+  sender_id:currentUser.id,receiver_id:target,status:"pending"
+ });
+ if(result.error&&/sender_id|receiver_id|schema cache|column .*does not exist|could not find/i.test(result.error.message||"")){
+  result=await db.from("nexora_friends").insert({
+   user_id:currentUser.id,friend_id:target,status:"pending"
+  });
+ }
+ if(result.error){alert("تعذّر إرسال طلب الصداقة: "+result.error.message);return}
+ $("friendUserId").value="";
+ alert("تم إرسال طلب الصداقة.");
+ await loadFriends();
+}
+async function respondFriend(id,status){
+ const {error}=await db.from("nexora_friends").update({status}).eq("id",id);
+ if(error){alert("تعذّر تحديث الطلب: "+error.message);return}
+ await loadFriends();
+}
+async function loadNotifications(){
+ const list=$("notificationList");
+ list.textContent="جاري تحميل الإشعارات...";
+ const {data,error}=await db.from("nexora_notifications").select("*")
+  .eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(100);
+ if(error){list.textContent="تعذّر تحميل الإشعارات: "+error.message;return}
+ if(!data?.length){list.textContent="ما عندك إشعارات للحين.";return}
+ list.innerHTML=data.map(n=>`
+  <div class="item"><strong>${esc(n.title||"إشعار")}</strong>
+   <div>${esc(n.content||n.message||n.body||"")}</div>
+   <div class="muted">${esc(dateText(n.created_at))}</div>
+  </div>`).join("");
+}
+db.auth.onAuthStateChange((event,session)=>{
+ if(session?.user){
+  currentUser=session.user;
+  $("auth").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  $("logoutBtn").classList.remove("hidden");
+  $("headerUser").textContent=currentName();
+  $("userId").textContent=currentUser.id;
+ }
+});
+(async()=>{
+ const {data}=await db.auth.getSession();
+ if(data.session){
+  currentUser=data.session.user;
+  await enterApp();
+ }
+})();
 </script>
 </body>
 </html>
