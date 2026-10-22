@@ -7,466 +7,595 @@
 <title>NEXORA CHAT</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--blue:#3977f6;--bg:#f6f8fc;--line:#e7eaf0;--text:#20283a;--muted:#7b8495}
+:root{--accent:#3978f6;--bg:#f5f7fb;--panel:#fff;--text:#202638;--muted:#81899a;--line:#e9edf4;--bubble:#3978f6}
 *{box-sizing:border-box}
-body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text)}
-button,input{font:inherit}
-button{border:0;border-radius:12px;padding:12px 16px;background:var(--blue);color:white;cursor:pointer}
-button:disabled{opacity:.5}
-input{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;outline:none;background:white;margin:5px 0}
-input:focus{border-color:var(--blue)}
-header{height:68px;background:white;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 22px}
-.logo{font-size:23px;font-weight:bold;color:var(--blue);letter-spacing:1px}
-.muted{color:var(--muted);font-size:13px}
-.auth{max-width:410px;margin:45px auto;padding:25px;background:white;border:1px solid var(--line);border-radius:20px}
-.auth h1{text-align:center}
-.tabs{display:flex;gap:8px;margin:20px 0}
-.tabs button{flex:1;background:#eef2fa;color:#4d5b73}
-.tabs button.active{background:var(--blue);color:white}
-#app{display:none;max-width:1100px;margin:22px auto;padding:0 15px}
-.layout{display:grid;grid-template-columns:320px 1fr;gap:16px;min-height:72vh}
-.panel{background:white;border:1px solid var(--line);border-radius:18px;overflow:hidden}
-.panelHead{padding:18px;border-bottom:1px solid var(--line)}
-.search{padding:12px}
-.users{max-height:60vh;overflow:auto}
-.person{width:100%;display:flex;align-items:center;gap:11px;text-align:right;background:white;color:var(--text);border-radius:0;border-bottom:1px solid #f0f2f6;padding:14px}
-.person:hover,.person.selected{background:#edf3ff}
-.avatar{width:43px;height:43px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e9efff;color:var(--blue);font-weight:bold;flex-shrink:0}
-.personInfo{min-width:0;flex:1}
-.personName{font-weight:bold;overflow-wrap:anywhere}
-.chat{display:flex;flex-direction:column;min-height:520px}
-.chatHead{padding:16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
-#messages{padding:18px;flex:1;min-height:300px;max-height:55vh;overflow:auto;background:#fafbfe}
-.msg{max-width:82%;width:fit-content;padding:11px 14px;border-radius:16px;margin:9px 0;background:white;border:1px solid var(--line);overflow-wrap:anywhere;white-space:pre-wrap}
-.msg.mine{margin-right:auto;background:#e9f1ff;border-color:#dbe7ff}
-.msg time{display:block;font-size:10px;color:var(--muted);margin-top:6px}
-.send{display:flex;gap:8px;padding:13px;border-top:1px solid var(--line)}
-.send input{margin:0}
-.send button{flex-shrink:0}
-.empty{margin:auto;text-align:center;padding:30px;color:var(--muted)}
-.notice{padding:12px;border-radius:12px;background:#edf3ff;color:#315da9;margin:12px 0;overflow-wrap:anywhere}
-.notice.error{background:#fff0f0;color:#b83c3c}
-.notice.success{background:#eafff1;color:#187747}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Segoe UI",sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+.top{height:70px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:5}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:21px;letter-spacing:.3px}
+.logo{width:39px;height:39px;border-radius:13px;background:var(--accent);color:white;display:grid;place-items:center;font-weight:900}
+.top-actions{display:flex;gap:9px;align-items:center}
+.iconbtn{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:12px;padding:10px 13px}
+.iconbtn:hover,.contact:hover{background:var(--bg)}
+.main{max-width:1200px;margin:24px auto;padding:0 18px}
+.layout{display:grid;grid-template-columns:330px minmax(0,1fr);gap:18px;min-height:calc(100vh - 118px)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;overflow:hidden;min-width:0}
+.sidebar{display:flex;flex-direction:column}
+.sidehead{padding:20px;border-bottom:1px solid var(--line)}
+h2{font-size:19px;margin:0 0 15px}
+.search{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text);outline:none}
+.search:focus,input:focus{border-color:var(--accent)}
+.section-label{font-size:12px;color:var(--muted);padding:16px 20px 7px}
+.contacts{overflow:auto;max-height:calc(100vh - 290px)}
+.contact{width:100%;border:0;background:transparent;color:var(--text);padding:13px 17px;display:flex;align-items:center;gap:11px;text-align:start}
+.contact.active{background:color-mix(in srgb,var(--accent) 10%,white)}
+.avatar{width:43px;height:43px;flex:0 0 43px;border-radius:50%;background:color-mix(in srgb,var(--accent) 15%,white);color:var(--accent);display:grid;place-items:center;font-weight:800}
+.contact-info{min-width:0;flex:1}
+.contact-name{font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.contact-sub{font-size:12px;color:var(--muted);margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat{display:flex;flex-direction:column;min-height:570px}
+.chat-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;min-height:78px}
+.chat-title{font-weight:800}
+.chat-status{font-size:12px;color:var(--muted);margin-top:5px}
+.messages{flex:1;min-height:300px;max-height:calc(100vh - 300px);overflow:auto;padding:22px;display:flex;flex-direction:column;gap:12px}
+.empty{margin:auto;text-align:center;color:var(--muted);padding:30px 15px;line-height:1.9}
+.empty-icon{font-size:38px;margin-bottom:10px}
+.message{max-width:min(78%,520px);padding:11px 14px;border-radius:16px;background:var(--bg);align-self:flex-start;overflow-wrap:anywhere;white-space:pre-wrap;line-height:1.6}
+.message.mine{align-self:flex-end;background:var(--bubble);color:white;border-bottom-left-radius:5px}
+.message:not(.mine){border-bottom-right-radius:5px}
+.time{font-size:10px;opacity:.7;text-align:end;margin-top:5px}
+.composer{display:flex;gap:10px;padding:15px;border-top:1px solid var(--line)}
+.composer input{flex:1;min-width:0;padding:13px 15px;border:1px solid var(--line);border-radius:13px;background:var(--bg);color:var(--text);outline:none}
+.primary{background:var(--accent);color:white;border:0;border-radius:12px;padding:12px 18px;font-weight:700}
+.primary:hover{filter:brightness(.95)}
+.notice{font-size:12px;color:var(--muted);padding:0 18px 15px;line-height:1.6}
+.auth-wrap{max-width:420px;margin:55px auto;padding:20px}
+.auth-card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:28px;box-shadow:0 10px 35px #24314a0a}
+.auth-card h1{font-size:24px;margin:0 0 8px}
+.subtitle{color:var(--muted);font-size:14px;line-height:1.7;margin-bottom:22px}
+.field{display:block;width:100%;margin:12px 0;padding:13px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);outline:none}
+.full{width:100%;margin-top:8px}
+.switch{border:0;background:none;color:var(--accent);padding:12px}
+.status{font-size:13px;line-height:1.7;margin-top:12px;color:var(--muted)}
+.status.error{color:#d33}
+.modal-back{position:fixed;inset:0;background:#17203370;z-index:20;display:none;align-items:center;justify-content:center;padding:18px}
+.modal-back.show{display:flex}
+.modal{background:var(--panel);color:var(--text);border-radius:20px;padding:23px;width:min(100%,420px);box-shadow:0 20px 70px #0002}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modal-head h2{margin:0}
+.setting-label{display:block;font-size:13px;font-weight:700;margin:17px 0 8px}
+.colors{display:flex;gap:12px;flex-wrap:wrap}
+.swatch{width:35px;height:35px;border-radius:50%;border:3px solid white;outline:1px solid var(--line)}
+.swatch.chosen{outline:3px solid var(--text)}
+.setting-select{width:100%;padding:12px;border:1px solid var(--line);border-radius:11px;background:var(--panel);color:var(--text)}
+.profilebox{display:flex;gap:12px;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
 .hidden{display:none!important}
-.topActions{display:flex;align-items:center;gap:12px}
-@media(max-width:700px){
- header{padding:0 12px}
- .logo{font-size:19px}
- #app{margin:12px auto;padding:0 9px}
- .layout{grid-template-columns:1fr;gap:10px}
- .panelHead{padding:13px}
- .users{max-height:220px}
- .chat{min-height:430px}
- #messages{min-height:260px;max-height:48vh;padding:12px}
- .auth{margin:25px 12px;padding:20px}
- .topActions .muted{display:none}
+.mobile-back{display:none}
+@media(max-width:760px){
+ .top{height:62px;padding:0 13px}.brand{font-size:17px}.logo{width:34px;height:34px}
+ .main{margin:12px auto;padding:0 10px}.layout{display:block;min-height:calc(100vh - 85px)}
+ .sidebar{min-height:calc(100vh - 85px)}.chat{display:none;min-height:calc(100vh - 85px)}
+ .layout.chat-open .sidebar{display:none}.layout.chat-open .chat{display:flex}
+ .contacts{max-height:calc(100vh - 270px)}.messages{max-height:none;min-height:0}
+ .mobile-back{display:inline-block}.top-actions .settings-text{display:none}
+ .auth-wrap{margin:20px auto;padding:12px}
 }
 </style>
 </head>
 <body>
-
-<header>
-  <div class="logo">NEXORA <span style="color:#7b8495;font-size:12px">CHAT</span></div>
-  <div class="topActions">
-    <span id="currentUser" class="muted"></span>
-    <button id="logout" class="hidden" onclick="logout()">خروج</button>
+<header class="top">
+  <div class="brand"><div class="logo">N</div><span>NEXORA CHAT</span></div>
+  <div class="top-actions">
+    <button class="iconbtn" id="settingsBtn" type="button" aria-label="Settings">⚙️ <span class="settings-text" data-i18n="settings">الإعدادات</span></button>
+    <button class="iconbtn hidden" id="logoutBtn" type="button" data-i18n="logout">تسجيل الخروج</button>
   </div>
 </header>
 
-<section id="auth" class="auth">
-  <h1 class="logo">أهلًا بك 👋</h1>
-  <p class="muted" style="text-align:center">محادثاتك الخاصة، بمكان واحد.</p>
-  <div class="tabs">
-    <button id="loginTab" class="active" onclick="setMode('login')">تسجيل الدخول</button>
-    <button id="signupTab" onclick="setMode('signup')">حساب جديد</button>
+<section class="auth-wrap" id="authView">
+  <div class="auth-card">
+    <h1 id="authTitle">مرحبًا بك 👋</h1>
+    <div class="subtitle" id="authSubtitle">تواصل مع الناس بسهولة وبخصوصية.</div>
+    <form id="authForm">
+      <input class="field hidden" id="displayName" placeholder="اسمك الظاهر" autocomplete="name">
+      <input class="field hidden" id="username" placeholder="اسم المستخدم بدون مسافات" autocomplete="username">
+      <input class="field" id="email" type="email" placeholder="البريد الإلكتروني" autocomplete="email" required>
+      <input class="field" id="password" type="password" placeholder="كلمة المرور" autocomplete="current-password" minlength="6" required>
+      <button class="primary full" id="authSubmit" type="submit">تسجيل الدخول</button>
+    </form>
+    <button class="switch" id="switchAuth" type="button">ما عندك حساب؟ أنشئ حساب</button>
+    <div class="status" id="authStatus" role="status"></div>
   </div>
-  <div id="signupFields" class="hidden">
-    <label>اسمك الظاهر</label>
-    <input id="displayName" maxlength="40" placeholder="اكتب اسمك">
-    <label>اسم المستخدم</label>
-    <input id="username" maxlength="24" placeholder="مثال: abdullah_1">
-  </div>
-  <label>البريد الإلكتروني</label>
-  <input id="email" type="email" autocomplete="email" placeholder="name@example.com">
-  <label>كلمة المرور</label>
-  <input id="password" type="password" autocomplete="current-password" placeholder="6 أحرف على الأقل">
-  <button id="authBtn" style="width:100%;margin-top:12px" onclick="authenticate()">دخول</button>
-  <div id="authNotice"></div>
 </section>
 
-<section id="app">
-  <div class="layout">
-    <aside class="panel">
-      <div class="panelHead">
-        <h3 style="margin:0">المحادثات</h3>
-        <p class="muted" style="margin:7px 0 0">ابحث عن مستخدم وابدأ محادثة خاصة.</p>
+<main class="main hidden" id="appView">
+  <div class="layout" id="layout">
+    <aside class="panel sidebar">
+      <div class="profilebox">
+        <div class="avatar" id="myAvatar">N</div>
+        <div class="contact-info">
+          <div class="contact-name" id="myName">حسابي</div>
+          <div class="contact-sub" id="myUsername">@username</div>
+        </div>
       </div>
-      <div class="search">
-        <input id="search" placeholder="ابحث باسم المستخدم..." oninput="searchUsers()">
-        <div id="searchNotice"></div>
+      <div class="sidehead">
+        <h2 data-i18n="messages">المحادثات</h2>
+        <input class="search" id="searchInput" type="search" placeholder="ابحث باسم المستخدم..." autocomplete="off">
       </div>
-      <div id="users" class="users">
-        <div class="empty">حمّلنا حسابك...</div>
+      <div class="section-label" id="resultsLabel">المستخدمون والمحادثات</div>
+      <div class="contacts" id="contacts">
+        <div class="empty" data-i18n="searchHint">ابحث عن اسم مستخدم لبدء محادثة.</div>
       </div>
+      <div class="notice" data-i18n="privateOnly">دردشات خاصة بينك وبين المستخدم الآخر.</div>
     </aside>
 
-    <main class="panel chat">
-      <div id="chatHead" class="chatHead hidden">
-        <div class="avatar" id="chatAvatar">؟</div>
+    <section class="panel chat" id="chatPanel">
+      <div class="chat-head">
+        <button class="iconbtn mobile-back" id="backBtn" type="button" aria-label="Back">←</button>
+        <div class="avatar" id="chatAvatar">N</div>
         <div>
-          <b id="chatName">المحادثة</b>
-          <div class="muted" id="chatUsername"></div>
+          <div class="chat-title" id="chatName">NEXORA CHAT</div>
+          <div class="chat-status" id="chatUsername">اختر مستخدمًا لبدء المحادثة</div>
         </div>
       </div>
-      <div id="messages">
-        <div class="empty">
-          <div style="font-size:42px">💬</div>
-          <h3>محادثتك تبدأ هنا</h3>
-          <p>اختر مستخدمًا من القائمة أو ابحث عن شخص.</p>
-        </div>
+      <div class="messages" id="messages">
+        <div class="empty"><div class="empty-icon">💬</div><strong data-i18n="welcome">خلّ التواصل أسهل</strong><br><span data-i18n="chooseUser">ابحث عن شخص وابدأ محادثتك الأولى.</span></div>
       </div>
-      <form id="sendForm" class="send hidden" onsubmit="sendMessage(event)">
-        <input id="messageInput" maxlength="4000" placeholder="اكتب رسالتك..." autocomplete="off" required>
-        <button id="sendBtn" type="submit">إرسال</button>
+      <form class="composer" id="messageForm">
+        <input id="messageInput" placeholder="اكتب رسالتك..." maxlength="4000" autocomplete="off" disabled>
+        <button class="primary" id="sendBtn" type="submit" disabled data-i18n="send">إرسال</button>
       </form>
-    </main>
+    </section>
   </div>
-  <div id="appNotice"></div>
-  <p class="muted" style="text-align:center;padding:15px">NEXORA CHAT · دردشة خاصة</p>
-</section>
+</main>
+
+<div class="modal-back" id="settingsModal">
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-head">
+      <h2 id="settingsTitle" data-i18n="settings">الإعدادات</h2>
+      <button class="iconbtn" id="closeSettings" type="button" aria-label="Close">✕</button>
+    </div>
+    <label class="setting-label" data-i18n="themeColor">لون الواجهة</label>
+    <div class="colors">
+      <button class="swatch chosen" style="background:#3978f6" data-color="#3978f6" aria-label="Blue"></button>
+      <button class="swatch" style="background:#7c4dff" data-color="#7c4dff" aria-label="Purple"></button>
+      <button class="swatch" style="background:#10a37f" data-color="#10a37f" aria-label="Green"></button>
+      <button class="swatch" style="background:#ef6c45" data-color="#ef6c45" aria-label="Orange"></button>
+      <button class="swatch" style="background:#e3487b" data-color="#e3487b" aria-label="Pink"></button>
+      <button class="swatch" style="background:#26364a" data-color="#26364a" aria-label="Navy"></button>
+    </div>
+    <label class="setting-label" for="languageSelect" data-i18n="language">اللغة</label>
+    <select class="setting-select" id="languageSelect">
+      <option value="ar">العربية</option>
+      <option value="en">English</option>
+    </select>
+    <label class="setting-label" for="appearanceSelect" data-i18n="appearance">المظهر</label>
+    <select class="setting-select" id="appearanceSelect">
+      <option value="light">فاتح</option>
+      <option value="dark">داكن</option>
+    </select>
+    <button class="primary full" id="saveSettings" type="button" data-i18n="save">حفظ الإعدادات</button>
+  </section>
+</div>
 
 <script>
 const SUPABASE_URL = 'https://ayfxtomfqrantxmpqgof.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_2d8TzhMCRIuc6daKrObBGA_7i0jUIxe';
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let user = null;
-let profile = null;
-let mode = 'login';
-let activePerson = null;
-let searchTimer = null;
-let refreshTimer = null;
-let busy = false;
-
 const $ = id => document.getElementById(id);
+let session = null, me = null, activeUser = null, isSignup = false;
+let refreshTimer = null, searchTimer = null, lastMessages = [];
+let language = 'ar', accent = '#3978f6', appearance = 'light';
 
-function escapeHTML(value) {
-  return String(value ?? '').replace(/[&<>"']/g, c => ({
-    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
-  }[c]));
+const words = {
+ ar:{
+  settings:'الإعدادات',logout:'تسجيل الخروج',messages:'المحادثات',
+  searchHint:'ابحث عن اسم مستخدم لبدء محادثة.',privateOnly:'دردشات خاصة بينك وبين المستخدم الآخر.',
+  welcome:'خلّ التواصل أسهل',chooseUser:'ابحث عن شخص وابدأ محادثتك الأولى.',
+  send:'إرسال',themeColor:'لون الواجهة',language:'اللغة',appearance:'المظهر',save:'حفظ الإعدادات',
+  light:'فاتح',dark:'داكن',searchPlaceholder:'ابحث باسم المستخدم...',
+  login:'تسجيل الدخول',signup:'إنشاء حساب',noAccount:'ما عندك حساب؟ أنشئ حساب',
+  hasAccount:'عندك حساب؟ سجّل دخولك',loginTitle:'مرحبًا بعودتك 👋',
+  signupTitle:'أنشئ حسابك ✨',loginSub:'سجّل دخولك وابدأ التواصل.',
+  signupSub:'أنشئ حسابك وابدأ محادثاتك الخاصة.',
+  displayName:'اسمك الظاهر',username:'اسم المستخدم بدون مسافات',
+  email:'البريد الإلكتروني',password:'كلمة المرور',myAccount:'حسابي',
+  usersAndChats:'المستخدمون والمحادثات',searchUsers:'ابحث عن اسم مستخدم.',
+  noResults:'ما لقينا مستخدم بهذا الاسم.',noChats:'ما عندك محادثات للحين.',
+  selectUser:'اختر مستخدمًا لبدء المحادثة',typeMessage:'اكتب رسالتك...',
+  sending:'جاري الإرسال...',sentError:'ما قدرنا نرسل الرسالة.',
+  searchError:'تعذّر البحث. جرّب مرة ثانية.',authError:'تعذّر تسجيل الدخول أو إنشاء الحساب.',
+  profileError:'تعذّر تجهيز ملفك. تأكد من إعدادات قاعدة البيانات.',
+  logoutError:'تعذّر تسجيل الخروج.',emptyMessage:'اكتب رسالة أول.',
+  confirmEmail:'شيّك بريدك لتأكيد الحساب، وبعدها سجّل دخولك.',
+  accountCreated:'تم إنشاء الحساب! سجّل دخولك.',
+  userNotFound:'ما لقينا مستخدم بهذا الاسم.',searchHintShort:'اكتب اسم المستخدم في البحث أعلاه.',
+  enterName:'اكتب اسمك واسم المستخدم.',invalidUsername:'اسم المستخدم: حروف إنجليزية وأرقام وشرطة سفلية فقط.',
+  duplicateUsername:'اسم المستخدم مستخدم. اختر اسمًا ثانيًا.',
+  settingsSaved:'تم حفظ الإعدادات.'
+ },
+ en:{
+  settings:'Settings',logout:'Log out',messages:'Chats',
+  searchHint:'Search for a username to start a chat.',privateOnly:'Private chats between you and the other user.',
+  welcome:'Stay connected',chooseUser:'Find someone and start your first chat.',
+  send:'Send',themeColor:'Accent color',language:'Language',appearance:'Appearance',save:'Save settings',
+  light:'Light',dark:'Dark',searchPlaceholder:'Search by username...',
+  login:'Log in',signup:'Create account',noAccount:"Don't have an account? Sign up",
+  hasAccount:'Already have an account? Log in',loginTitle:'Welcome back 👋',
+  signupTitle:'Create your account ✨',loginSub:'Log in and start connecting.',
+  signupSub:'Create an account and start private chats.',
+  displayName:'Display name',username:'Username, no spaces',
+  email:'Email address',password:'Password',myAccount:'My account',
+  usersAndChats:'People and chats',searchUsers:'Search for a username.',
+  noResults:'No users found.',noChats:'No chats yet.',
+  selectUser:'Choose someone to start chatting',typeMessage:'Write a message...',
+  sending:'Sending...',sentError:'Could not send the message.',
+  searchError:'Search failed. Please try again.',authError:'Could not log in or create account.',
+  profileError:'Could not set up your profile. Check your database setup.',
+  logoutError:'Could not log out.',emptyMessage:'Write a message first.',
+  confirmEmail:'Check your email to confirm your account, then log in.',
+  accountCreated:'Account created! Please log in.',
+  userNotFound:'No user found with that username.',searchHintShort:'Type a username in the search above.',
+  enterName:'Enter your name and username.',invalidUsername:'Username: English letters, numbers, and underscores only.',
+  duplicateUsername:'Username taken. Choose another.',
+  settingsSaved:'Settings saved.'
+ }
+};
+const t = key => words[language][key] || key;
+
+function setStatus(el, message, error=false) {
+ el.textContent = message;
+ el.classList.toggle('error', error);
 }
-
-function showNotice(text, type = '', target = 'appNotice') {
-  const el = $(target);
-  el.innerHTML = text ? `<div class="notice ${type}">${escapeHTML(text)}</div>` : '';
+function safeText(s) { return String(s ?? ''); }
+function initials(name) {
+ const s = safeText(name).trim();
+ return s ? s.slice(0,2).toUpperCase() : 'N';
 }
-
-function friendlyError(error) {
-  const text = error?.message || String(error);
-  if (/Invalid login credentials/i.test(text)) return 'البريد أو كلمة المرور غير صحيحة.';
-  if (/Email not confirmed/i.test(text)) return 'أكد بريدك الإلكتروني أولًا، ثم سجّل الدخول.';
-  if (/already registered/i.test(text)) return 'هذا البريد مسجل من قبل، جرّب تسجيل الدخول.';
-  if (/row-level security|permission denied|not allowed/i.test(text)) return 'قاعدة البيانات تمنع العملية بسبب الصلاحيات. نحتاج إعداد صلاحيات الجداول.';
-  if (/relation .* does not exist|schema cache/i.test(text)) return 'جداول الدردشة غير مجهزة في قاعدة البيانات حتى الآن.';
-  if (/duplicate key|unique constraint/i.test(text)) return 'اسم المستخدم مستخدم، جرّب اسمًا ثانيًا.';
-  return text;
+function escapeHTML(s) {
+ return safeText(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-
-function setMode(next) {
-  mode = next;
-  $('signupFields').classList.toggle('hidden', mode !== 'signup');
-  $('loginTab').classList.toggle('active', mode === 'login');
-  $('signupTab').classList.toggle('active', mode === 'signup');
-  $('authBtn').textContent = mode === 'login' ? 'دخول' : 'إنشاء الحساب';
-  $('password').autocomplete = mode === 'login' ? 'current-password' : 'new-password';
-  showNotice('', '', 'authNotice');
+function applySettings() {
+ document.documentElement.lang = language;
+ document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+ document.documentElement.style.setProperty('--accent', accent);
+ document.documentElement.style.setProperty('--bubble', accent);
+ document.body.style.background = appearance === 'dark' ? '#111827' : '';
+ document.documentElement.style.setProperty('--bg', appearance === 'dark' ? '#182131' : '#f5f7fb');
+ document.documentElement.style.setProperty('--panel', appearance === 'dark' ? '#202b3c' : '#fff');
+ document.documentElement.style.setProperty('--text', appearance === 'dark' ? '#edf2fa' : '#202638');
+ document.documentElement.style.setProperty('--muted', appearance === 'dark' ? '#a7b1c2' : '#81899a');
+ document.documentElement.style.setProperty('--line', appearance === 'dark' ? '#344155' : '#e9edf4');
+ $('languageSelect').value = language;
+ $('appearanceSelect').value = appearance;
+ document.querySelectorAll('[data-i18n]').forEach(el => {
+   const key = el.getAttribute('data-i18n');
+   if (words[language][key]) el.textContent = words[language][key];
+ });
+ $('searchInput').placeholder = t('searchPlaceholder');
+ $('messageInput').placeholder = t('typeMessage');
+ $('displayName').placeholder = t('displayName');
+ $('username').placeholder = t('username');
+ $('email').placeholder = t('email');
+ $('password').placeholder = t('password');
+ $('authTitle').textContent = isSignup ? t('signupTitle') : t('loginTitle');
+ $('authSubtitle').textContent = isSignup ? t('signupSub') : t('loginSub');
+ $('authSubmit').textContent = isSignup ? t('signup') : t('login');
+ $('switchAuth').textContent = isSignup ? t('hasAccount') : t('noAccount');
+ $('appearanceSelect').options[0].text = t('light');
+ $('appearanceSelect').options[1].text = t('dark');
+ document.querySelectorAll('.swatch').forEach(el => el.classList.toggle('chosen', el.dataset.color === accent));
+ if (me) {
+   $('myName').textContent = me.display_name || me.username;
+   $('myUsername').textContent = '@' + me.username;
+ }
 }
+function loadSettings() {
+ try {
+  const s = JSON.parse(localStorage.getItem('nexora-chat-settings') || '{}');
+  if (['ar','en'].includes(s.language)) language = s.language;
+  if (['light','dark'].includes(s.appearance)) appearance = s.appearance;
+  if (/^#[0-9a-f]{6}$/i.test(s.accent || '')) accent = s.accent;
+ } catch(e) {}
+ applySettings();
+}
+function saveSettings() {
+ language = $('languageSelect').value;
+ appearance = $('appearanceSelect').value;
+ try { localStorage.setItem('nexora-chat-settings', JSON.stringify({language,appearance,accent})); } catch(e) {}
+ applySettings();
+ $('settingsModal').classList.remove('show');
+ if (me) renderContacts(lastContacts, $('searchInput').value.trim());
+}
+let lastContacts = [];
 
-async function authenticate() {
-  if (busy) return;
-  const email = $('email').value.trim();
-  const password = $('password').value;
-  if (!email || !password) {
-    showNotice('اكتب البريد الإلكتروني وكلمة المرور.', 'error', 'authNotice');
-    return;
+function setAuthMode(signup) {
+ isSignup = signup;
+ $('displayName').classList.toggle('hidden', !signup);
+ $('username').classList.toggle('hidden', !signup);
+ $('password').autocomplete = signup ? 'new-password' : 'current-password';
+ $('displayName').required = signup;
+ $('username').required = signup;
+ setStatus($('authStatus'), '');
+ applySettings();
+}
+$('switchAuth').addEventListener('click', () => setAuthMode(!isSignup));
+$('settingsBtn').addEventListener('click', () => $('settingsModal').classList.add('show'));
+$('closeSettings').addEventListener('click', () => $('settingsModal').classList.remove('show'));
+$('settingsModal').addEventListener('click', e => { if (e.target === $('settingsModal')) $('settingsModal').classList.remove('show'); });
+document.querySelectorAll('.swatch').forEach(btn => btn.addEventListener('click', () => {
+ accent = btn.dataset.color;
+ applySettings();
+}));
+$('saveSettings').addEventListener('click', saveSettings);
+$('languageSelect').addEventListener('change', () => { language = $('languageSelect').value; applySettings(); });
+$('appearanceSelect').addEventListener('change', () => { appearance = $('appearanceSelect').value; applySettings(); });
+
+$('authForm').addEventListener('submit', async e => {
+ e.preventDefault();
+ const email = $('email').value.trim();
+ const password = $('password').value;
+ const btn = $('authSubmit');
+ btn.disabled = true;
+ setStatus($('authStatus'), isSignup ? t('sending') : t('sending'));
+ try {
+  let result;
+  if (isSignup) {
+   const name = $('displayName').value.trim();
+   const username = $('username').value.trim().toLowerCase().replace(/^@/,'');
+   if (!name || !username) throw new Error('enter_name');
+   if (!/^[a-z0-9_]{3,24}$/.test(username)) throw new Error('invalid_username');
+   result = await db.auth.signUp({email,password,options:{data:{display_name:name,username}}});
+   if (result.error) throw result.error;
+   if (!result.data.session) {
+    setStatus($('authStatus'), t('confirmEmail'));
+   } else {
+    session = result.data.session;
+    await ensureProfile(session.user, username, name);
+    await enterApp();
+   }
+  } else {
+   result = await db.auth.signInWithPassword({email,password});
+   if (result.error) throw result.error;
+   session = result.data.session;
+   await enterApp();
   }
-  if (password.length < 6) {
-    showNotice('كلمة المرور لازم تكون 6 أحرف على الأقل.', 'error', 'authNotice');
-    return;
-  }
-
-  let username = $('username').value.trim().replace(/^@/, '').toLowerCase();
-  const displayName = $('displayName').value.trim();
-
-  if (mode === 'signup') {
-    if (!displayName) {
-      showNotice('اكتب اسمك الظاهر.', 'error', 'authNotice');
-      return;
-    }
-    if (!/^[a-z0-9_.-]{3,24}$/.test(username)) {
-      showNotice('اسم المستخدم من 3 إلى 24 حرفًا، إنجليزي أو أرقام أو _ أو نقطة أو شرطة.', 'error', 'authNotice');
-      return;
-    }
-  }
-
-  busy = true;
-  $('authBtn').disabled = true;
-  showNotice('لحظة، جاري التنفيذ...', '', 'authNotice');
-
-  try {
-    if (mode === 'signup') {
-      const { data, error } = await db.auth.signUp({
-        email,
-        password,
-        options: { data: { username, display_name: displayName } }
-      });
-      if (error) throw error;
-      if (!data.session) {
-        showNotice('تم إرسال طلب إنشاء الحساب. إذا طلب Supabase تأكيد البريد، افتح رسالة التأكيد ثم سجّل الدخول.', 'success', 'authNotice');
-        return;
-      }
-      user = data.user;
-      await boot();
-    } else {
-      const { data, error } = await db.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      user = data.user;
-      await boot();
-    }
-  } catch (error) {
-    showNotice(friendlyError(error), 'error', 'authNotice');
-  } finally {
-    busy = false;
-    $('authBtn').disabled = false;
-  }
-}
-
-async function boot() {
-  const { data } = await db.auth.getSession();
-  user = data.session?.user || user;
-  if (!user) return showAuth();
-
-  $('auth').classList.add('hidden');
-  $('app').style.display = 'block';
-  $('logout').classList.remove('hidden');
-
-  try {
-    const { data: p, error } = await db.from('chat_profiles')
-      .select('id,username,display_name')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (error) throw error;
-    profile = p;
-
-    if (!profile) {
-      const meta = user.user_metadata || {};
-      const base = String(meta.username || user.email?.split('@')[0] || 'user')
-        .toLowerCase().replace(/[^a-z0-9_.-]/g, '_').slice(0, 18);
-      const { data: created, error: createError } = await db.from('chat_profiles')
-        .insert({
-          id: user.id,
-          username: base + '_' + user.id.slice(0, 4),
-          display_name: meta.display_name || base
-        })
-        .select().single();
-      if (createError) throw createError;
-      profile = created;
-    }
-
-    $('currentUser').textContent = profile.display_name || profile.username;
-    showNotice('');
-    await loadRecentChats();
-  } catch (error) {
-    showNotice('تعذر تجهيز حسابك: ' + friendlyError(error), 'error');
-  }
-}
-
-function showAuth() {
-  user = null;
-  profile = null;
-  activePerson = null;
-  clearInterval(refreshTimer);
-  $('app').style.display = 'none';
-  $('auth').classList.remove('hidden');
-  $('logout').classList.add('hidden');
-}
-
-async function logout() {
-  clearInterval(refreshTimer);
-  const { error } = await db.auth.signOut();
-  if (error) {
-    showNotice(friendlyError(error), 'error', 'authNotice');
-    return;
-  }
-  showAuth();
-  showNotice('تم تسجيل الخروج.', 'success', 'authNotice');
-}
-
-function personButton(p, selected = false) {
-  const name = p.display_name || p.username || 'مستخدم';
-  const initial = escapeHTML(name.trim().slice(0, 2) || '؟');
-  return `<button class="person ${selected ? 'selected' : ''}" onclick="openChat('${escapeHTML(p.id)}')">
-    <div class="avatar">${initial}</div>
-    <div class="personInfo">
-      <div class="personName">${escapeHTML(name)}</div>
-      <div class="muted">@${escapeHTML(p.username || '')}</div>
-    </div>
-  </button>`;
-}
-
-async function searchUsers() {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(async () => {
-    if (!user) return;
-    const q = $('search').value.trim().replace(/^@/, '');
-    if (q.length < 2) {
-      showNotice('', '', 'searchNotice');
-      await loadRecentChats();
-      return;
-    }
-
-    showNotice('جاري البحث...', '', 'searchNotice');
-    const { data, error } = await db.from('chat_profiles')
-      .select('id,username,display_name')
-      .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
-      .neq('id', user.id)
-      .limit(25);
-
-    if (error) {
-      showNotice(friendlyError(error), 'error', 'searchNotice');
-      return;
-    }
-    showNotice(data?.length ? 'نتائج البحث' : 'ما لقينا مستخدمًا بهذا الاسم.', '', 'searchNotice');
-    $('users').innerHTML = (data || []).map(p => personButton(p, activePerson?.id === p.id)).join('')
-      || '<div class="empty">جرّب اسم مستخدم ثاني.</div>';
-  }, 300);
-}
-
-async function loadRecentChats() {
-  if (!user || $('search').value.trim().length >= 2) return;
-  const { data, error } = await db.from('chat_messages')
-    .select('sender_id,receiver_id,created_at')
-    .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-    .order('created_at', { ascending: false })
-    .limit(200);
-
-  if (error) {
-    $('users').innerHTML = '<div class="empty">ما قدرنا نحمل المحادثات.</div>';
-    showNotice(friendlyError(error), 'error');
-    return;
-  }
-
-  const ids = [...new Set((data || []).map(m =>
-    m.sender_id === user.id ? m.receiver_id : m.sender_id
-  ).filter(id => id && id !== user.id))];
-
-  if (!ids.length) {
-    $('users').innerHTML = '<div class="empty">ما عندك محادثات للحين.<br>ابحث عن مستخدم بالأعلى لبدء محادثة.</div>';
-    return;
-  }
-
-  const { data: people, error: peopleError } = await db.from('chat_profiles')
-    .select('id,username,display_name').in('id', ids);
-  if (peopleError) {
-    showNotice(friendlyError(peopleError), 'error');
-    return;
-  }
-
-  const ordered = ids.map(id => (people || []).find(p => p.id === id)).filter(Boolean);
-  $('users').innerHTML = ordered.map(p => personButton(p, activePerson?.id === p.id)).join('');
-}
-
-async function openChat(id) {
-  if (!user || id === user.id) return;
-  const { data: p, error } = await db.from('chat_profiles')
-    .select('id,username,display_name').eq('id', id).maybeSingle();
-
-  if (error || !p) {
-    showNotice(friendlyError(error || { message: 'المستخدم غير موجود.' }), 'error');
-    return;
-  }
-
-  activePerson = p;
-  $('chatHead').classList.remove('hidden');
-  $('sendForm').classList.remove('hidden');
-  $('chatName').textContent = p.display_name || p.username;
-  $('chatUsername').textContent = '@' + p.username;
-  $('chatAvatar').textContent = (p.display_name || p.username || '؟').slice(0, 2);
-
-  await refreshMessages();
-  clearInterval(refreshTimer);
-  refreshTimer = setInterval(refreshMessages, 4000);
-  await loadRecentChats();
-}
-
-async function refreshMessages() {
-  if (!user || !activePerson) return;
-  const { data, error } = await db.from('chat_messages')
-    .select('id,sender_id,receiver_id,content,created_at')
-    .or(`and(sender_id.eq.${user.id},receiver_id.eq.${activePerson.id}),and(sender_id.eq.${activePerson.id},receiver_id.eq.${user.id})`)
-    .order('created_at', { ascending: true })
-    .limit(200);
-
-  if (error) {
-    showNotice(friendlyError(error), 'error');
-    return;
-  }
-
-  $('messages').innerHTML = (data || []).map(m => {
-    const mine = m.sender_id === user.id;
-    const date = new Date(m.created_at);
-    const time = isNaN(date.getTime()) ? '' : date.toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'});
-    return `<div class="msg ${mine ? 'mine' : ''}">${escapeHTML(m.content)}<time>${time}</time></div>`;
-  }).join('') || '<div class="empty">ابدأ المحادثة برسالة لطيفة 👋</div>';
-
-  $('messages').scrollTop = $('messages').scrollHeight;
-}
-
-async function sendMessage(event) {
-  event.preventDefault();
-  if (!user || !activePerson || busy) return;
-
-  const content = $('messageInput').value.trim();
-  if (!content) return;
-
-  busy = true;
-  $('sendBtn').disabled = true;
-  try {
-    const { error } = await db.from('chat_messages').insert({
-      sender_id: user.id,
-      receiver_id: activePerson.id,
-      content
-    });
-    if (error) throw error;
-    $('messageInput').value = '';
-    await refreshMessages();
-    await loadRecentChats();
-  } catch (error) {
-    showNotice('تعذر إرسال الرسالة: ' + friendlyError(error), 'error');
-  } finally {
-    busy = false;
-    $('sendBtn').disabled = false;
-    $('messageInput').focus();
-  }
-}
-
-db.auth.onAuthStateChange((event, session) => {
-  if (session?.user && !user) {
-    user = session.user;
-    setTimeout(boot, 0);
-  } else if (!session?.user && user) {
-    showAuth();
-  }
+ } catch(err) {
+  let msg = t('authError');
+  if (err.message === 'enter_name') msg = t('enterName');
+  else if (err.message === 'invalid_username') msg = t('invalidUsername');
+  else if (err.code === '23505' || /duplicate key|unique constraint/i.test(err.message || '')) msg = t('duplicateUsername');
+  else if (/Invalid login credentials/i.test(err.message || '')) msg = language === 'ar' ? 'بيانات الدخول غير صحيحة.' : 'Invalid email or password.';
+  setStatus($('authStatus'), msg, true);
+ } finally { btn.disabled = false; }
 });
 
-(async () => {
-  const { data } = await db.auth.getSession();
-  if (data.session) {
-    user = data.session.user;
-    await boot();
+async function ensureProfile(user, preferredUsername='', preferredName='') {
+ let {data: profile, error} = await db.from('chat_profiles').select('*').eq('id',user.id).maybeSingle();
+ if (error) throw error;
+ if (profile) { me = profile; return profile; }
+
+ const meta = user.user_metadata || {};
+ const name = preferredName || meta.display_name || user.email?.split('@')[0] || 'User';
+ let base = (preferredUsername || meta.username || 'user').toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,18) || 'user';
+ let username = base;
+ let attempt = 0;
+ while (true) {
+  const {data: existing, error: findError} = await db.from('chat_profiles').select('id').eq('username',username).maybeSingle();
+  if (findError) throw findError;
+  if (!existing || existing.id === user.id) break;
+  attempt++;
+  username = (base.slice(0,17) + '_' + attempt).slice(0,24);
+ }
+ const result = await db.from('chat_profiles').insert({id:user.id,username,display_name:name}).select().single();
+ if (result.error) throw result.error;
+ me = result.data;
+ return me;
+}
+
+async function enterApp() {
+ if (!session?.user) return;
+ try {
+  await ensureProfile(session.user);
+  $('authView').classList.add('hidden');
+  $('appView').classList.remove('hidden');
+  $('logoutBtn').classList.remove('hidden');
+  $('myAvatar').textContent = initials(me.display_name || me.username);
+  applySettings();
+  await loadContacts();
+  $('searchInput').value = '';
+  showWelcome();
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(async () => {
+    if (!me) return;
+    await loadContacts(true);
+    if (activeUser) await loadMessages(true);
+  }, 5000);
+ } catch(err) {
+  setStatus($('authStatus'), t('profileError'), true);
+  console.error(err);
+ }
+}
+
+function showWelcome() {
+ activeUser = null;
+ $('layout').classList.remove('chat-open');
+ $('chatName').textContent = 'NEXORA CHAT';
+ $('chatUsername').textContent = t('selectUser');
+ $('chatAvatar').textContent = 'N';
+ $('messages').innerHTML = '<div class="empty"><div class="empty-icon">💬</div><strong>'+escapeHTML(t('welcome'))+'</strong><br>'+escapeHTML(t('chooseUser'))+'</div>';
+ $('messageInput').disabled = true;
+ $('sendBtn').disabled = true;
+}
+async function loadContacts(silent=false) {
+ if (!me) return;
+ const {data: sent, error: sentErr} = await db.from('chat_messages')
+  .select('sender_id,receiver_id,content,created_at').eq('sender_id',me.id).order('created_at',{ascending:false}).limit(150);
+ const {data: received, error: receivedErr} = await db.from('chat_messages')
+  .select('sender_id,receiver_id,content,created_at').eq('receiver_id',me.id).order('created_at',{ascending:false}).limit(150);
+ if (sentErr || receivedErr) {
+  if (!silent) setStatus($('authStatus'), t('searchError'), true);
+  return;
+ }
+ const messages = [...(sent||[]),...(received||[])].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+ const ids = [];
+ for (const m of messages) {
+  const id = m.sender_id === me.id ? m.receiver_id : m.sender_id;
+  if (id !== me.id && !ids.includes(id)) ids.push(id);
+ }
+ let profiles = [];
+ if (ids.length) {
+  const result = await db.from('chat_profiles').select('id,username,display_name').in('id',ids);
+  if (!result.error) profiles = result.data || [];
+ }
+ const byId = Object.fromEntries(profiles.map(p=>[p.id,p]));
+ lastContacts = ids.map(id => {
+  const p = byId[id];
+  const m = messages.find(x => x.sender_id === id || x.receiver_id === id);
+  return p ? {...p,lastMessage:m?.content || ''} : null;
+ }).filter(Boolean);
+ const q = $('searchInput').value.trim();
+ renderContacts(lastContacts, q);
+}
+function renderContacts(chats, query='') {
+ const el = $('contacts');
+ const q = query.toLowerCase().replace(/^@/,'');
+ let items;
+ if (q) items = chats.filter(p => p.username.toLowerCase().includes(q) || (p.display_name||'').toLowerCase().includes(q));
+ else items = chats;
+ el.innerHTML = '';
+ if (!items.length) {
+  el.innerHTML = '<div class="empty">'+escapeHTML(q ? t('noResults') : t('noChats'))+'<br>'+escapeHTML(q ? '' : t('searchHintShort'))+'</div>';
+  if (!q) {
+   $('resultsLabel').textContent = t('messages');
+  } else {
+   $('resultsLabel').textContent = t('usersAndChats');
   }
-})();
+  return;
+ }
+ $('resultsLabel').textContent = q ? t('usersAndChats') : t('messages');
+ items.forEach(p => {
+  const btn = document.createElement('button');
+  btn.className = 'contact' + (activeUser?.id === p.id ? ' active' : '');
+  btn.innerHTML = '<div class="avatar">'+escapeHTML(initials(p.display_name||p.username))+'</div><div class="contact-info"><div class="contact-name">'+escapeHTML(p.display_name||p.username)+'</div><div class="contact-sub">@'+escapeHTML(p.username)+'</div></div>';
+  btn.addEventListener('click', () => openChat(p));
+  el.appendChild(btn);
+ });
+}
+$('searchInput').addEventListener('input', () => {
+ clearTimeout(searchTimer);
+ const q = $('searchInput').value.trim();
+ if (!q) { renderContacts(lastContacts,''); return; }
+ searchTimer = setTimeout(() => searchUsers(q), 300);
+});
+async function searchUsers(query) {
+ if (!me || !query.trim()) return;
+ const q = query.trim().replace(/^@/,'').toLowerCase();
+ const el = $('contacts');
+ const {data, error} = await db.from('chat_profiles')
+  .select('id,username,display_name')
+  .neq('id',me.id)
+  .ilike('username', '%' + q.replace(/[%_]/g,'') + '%')
+  .order('username').limit(30);
+ if (error) {
+  el.innerHTML = '<div class="empty">'+escapeHTML(t('searchError'))+'</div>';
+  return;
+ }
+ const found = data || [];
+ const byId = new Map(found.map(p=>[p.id,p]));
+ for (const p of lastContacts) if (!byId.has(p.id) && (p.username.toLowerCase().includes(q)||(p.display_name||'').toLowerCase().includes(q))) byId.set(p.id,p);
+ renderContacts([...byId.values()], q);
+}
+async function openChat(profile) {
+ activeUser = profile;
+ $('chatName').textContent = profile.display_name || profile.username;
+ $('chatUsername').textContent = '@' + profile.username;
+ $('chatAvatar').textContent = initials(profile.display_name||profile.username);
+ $('messageInput').disabled = false;
+ $('sendBtn').disabled = false;
+ $('layout').classList.add('chat-open');
+ renderContacts(lastContacts, $('searchInput').value.trim());
+ await loadMessages();
+ $('messageInput').focus();
+}
+function renderMessages(messages) {
+ const el = $('messages');
+ if (!messages.length) {
+  el.innerHTML = '<div class="empty"><div class="empty-icon">👋</div>'+escapeHTML(language==='ar'?'ابدأ المحادثة برسالة لطيفة.':'Start the conversation with a message.')+'</div>';
+  return;
+ }
+ el.innerHTML = messages.map(m => {
+  const mine = m.sender_id === me.id;
+  const date = new Date(m.created_at);
+  const time = isNaN(date.getTime()) ? '' : date.toLocaleTimeString(language==='ar'?'ar-SA':'en-US',{hour:'2-digit',minute:'2-digit'});
+  return '<div class="message '+(mine?'mine':'')+'">'+escapeHTML(m.content)+'<div class="time">'+escapeHTML(time)+'</div></div>';
+ }).join('');
+ el.scrollTop = el.scrollHeight;
+}
+async function loadMessages(silent=false) {
+ if (!me || !activeUser) return;
+ const {data, error} = await db.from('chat_messages').select('id,sender_id,receiver_id,content,created_at')
+  .or('and(sender_id.eq.'+me.id+',receiver_id.eq.'+activeUser.id+'),and(sender_id.eq.'+activeUser.id+',receiver_id.eq.'+me.id+')')
+  .order('created_at',{ascending:true}).limit(300);
+ if (error) {
+  if (!silent) $('messages').innerHTML = '<div class="empty">'+escapeHTML(t('searchError'))+'</div>';
+  return;
+ }
+ renderMessages(data || []);
+}
+$('messageForm').addEventListener('submit', async e => {
+ e.preventDefault();
+ if (!me || !activeUser) return;
+ const content = $('messageInput').value.trim();
+ if (!content) return;
+ const input = $('messageInput'), btn = $('sendBtn');
+ input.value = '';
+ btn.disabled = true;
+ const {error} = await db.from('chat_messages').insert({
+  sender_id:me.id, receiver_id:activeUser.id, content
+ });
+ btn.disabled = false;
+ if (error) {
+  input.value = content;
+  alert(t('sentError'));
+  console.error(error);
+  return;
+ }
+ await loadMessages();
+ await loadContacts(true);
+ input.focus();
+});
+$('backBtn').addEventListener('click', () => {
+ $('layout').classList.remove('chat-open');
+ activeUser = null;
+});
+$('logoutBtn').addEventListener('click', async () => {
+ const {error} = await db.auth.signOut();
+ if (error) { alert(t('logoutError')); return; }
+ if (refreshTimer) clearInterval(refreshTimer);
+ session = null; me = null; activeUser = null; lastContacts = [];
+ $('appView').classList.add('hidden');
+ $('authView').classList.remove('hidden');
+ $('logoutBtn').classList.add('hidden');
+ $('email').value = ''; $('password').value = '';
+ setStatus($('authStatus'),'');
+ setAuthMode(false);
+});
+
+async function start() {
+ loadSettings();
+ setAuthMode(false);
+ const {data, error} = await db.auth.getSession();
+ if (error) console.error(error);
+ session = data?.session || null;
+ if (session?.user) await enterApp();
+}
+db.auth.onAuthStateChange((_event, newSession) => {
+ session = newSession;
+});
+start();
 </script>
 </body>
 </html>
